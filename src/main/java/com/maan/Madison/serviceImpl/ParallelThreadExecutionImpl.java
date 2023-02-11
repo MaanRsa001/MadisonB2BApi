@@ -171,10 +171,10 @@ public class ParallelThreadExecutionImpl {
 						.premium(m.getPremium().toString())
 						.vehicleValue(m.getSuminsuredValueLocal()==null?"":m.getSuminsuredValueLocal().toString())
 						.bodyType(m.getBody().toString())
-						.make(makeMasterRepository.getMakeNameById(m.getMakeId().toString()))
-						.model(makeMasterRepository.getModelNameById(m.getMakeId().toString(), m.getModelId().toString()))
-						.vehicleUsage("")	
-						.bodyType(makeMasterRepository.getBodyNameById(m.getBody().toString()))
+						.make(StringUtils.isBlank(m.getMakeName())?"":m.getMakeName())
+						.model(StringUtils.isBlank(m.getModelName())?"":m.getModelName())
+						.vehicleUsage(StringUtils.isBlank(m.getBodyName())?"":m.getBodyName())
+						.bodyType(StringUtils.isBlank(m.getBodyName())?"":m.getBodyName())
 						.applicationNo(m.getApplicationNo().toString())
 						.quoteNo(m.getQuoteNo().toString())
 						.vehicleId(m.getVehicleId().toString())
@@ -236,19 +236,19 @@ public class ParallelThreadExecutionImpl {
 			
 			Double basePremium =list.stream()
 					.filter(i ->i.getGroupId().toString().equals("0"))
-					.collect(Collectors.summingDouble(I ->I.getPremium()));
+					.collect(Collectors.summingDouble(I ->StringUtils.isBlank(I.getPremium().toString())?0D:I.getPremium()));
 			
 			Double electricalAccess =list.stream()
 					.filter(i ->i.getGroupId().toString().equals("101"))
-					.collect(Collectors.summingDouble(I ->I.getPremium()));
+					.collect(Collectors.summingDouble(I ->StringUtils.isBlank(I.getPremium().toString())?0D:I.getPremium()));
 			
 			Double nonElectricalAccess =list.stream()
 					.filter(i ->i.getGroupId().toString().equals("102"))
-					.collect(Collectors.summingDouble(I ->I.getPremium()));
+					.collect(Collectors.summingDouble(I ->StringUtils.isBlank(I.getPremium().toString())?0D:I.getPremium()));
 			
 			Double deductables =list.stream()
 					.filter(i ->i.getGroupId().toString().equals("104"))
-					.collect(Collectors.summingDouble(I ->I.getPremium()));
+					.collect(Collectors.summingDouble(I ->StringUtils.isBlank(I.getPremium().toString())?0D:I.getPremium()));
 			
 			HomePositionMaster hpm=homePositionMasterRepository.findByApplicationNo(applicationNo);
 			

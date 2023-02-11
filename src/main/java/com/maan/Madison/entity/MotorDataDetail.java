@@ -352,8 +352,19 @@ private static final long serialVersionUID = 1L;
     @Column(name="CUSTOMER_TYPE", length=100)
     private String     customerType ;
 
+    @Column(name="MAKE_NAME", length=100)
+    private String     makeName ;
 
+    @Column(name="BODY_NAME", length=100)
+    private String     bodyName ;
 
+    @Column(name="MODEL_NAME", length=100)
+    private String     modelName ;
+
+    @Column(name="VEHICLE_USAGE_NAME", length=100)
+    private String     vehUsageName ;
+
+    
 
 
 }

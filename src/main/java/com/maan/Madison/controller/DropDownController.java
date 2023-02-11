@@ -22,7 +22,6 @@ public class DropDownController {
 	private DropDownService service;
 	
 	
-	
 	@GetMapping("/get/currencytype")
 	public CommonResponse getCurrencyType() {
 		return service.getCurrencyType();
@@ -38,7 +37,6 @@ public class DropDownController {
 		return service.getPolicyDatys(policyStartDate);
 	}
 	
-	
 	@GetMapping("/get/customertype")
 	public CommonResponse getCustomerType() {
 		return service.getCustomerType();
@@ -53,7 +51,6 @@ public class DropDownController {
 	public CommonResponse getVehicleMake() {
 		return service.getVehicleMake();
 	}
-	
 	
 	@GetMapping("/get/vehiclemodel")
 	public CommonResponse getVehicleModel(@RequestParam ("makeId") String makeId) {
@@ -89,7 +86,6 @@ public class DropDownController {
 	public CommonResponse getNcbClaims(@RequestBody DeductibleReq req) {
 		return service.getNcbClaims(req);
 	}
-	
 	
 	@GetMapping("/get/inscompany")
 	public CommonResponse getInsCompany() {

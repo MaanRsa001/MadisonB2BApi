@@ -305,8 +305,7 @@ public class MadisonQuoteServiceImpl implements MadisonQuoteService{
 				
 				policyFeesPercent =hpmRepo.getPolicyfeesPercent(hpm.getBranchCode());
 				
-				policyFees =prewithloading*Double.valueOf(policyFeesPercent)/100;
-				
+				policyFees =prewithloading*Double.valueOf(policyFeesPercent)/100;				
 				
 			}else {			
 				String pre =hpmRepo.getPremium(hpm.getApplicationNo());
@@ -379,6 +378,10 @@ public class MadisonQuoteServiceImpl implements MadisonQuoteService{
 					.customerType(pi.getCustomerType())
 					.deductibleId(Long.valueOf(req.getExcessLimit()))
 					.deductibleAmount(Long.valueOf(excessAmount))
+					.makeName(makeMasterRepository.getMakeNameById(req.getMakeId()))
+					.modelName(makeMasterRepository.getModelNameById(req.getMakeId(),req.getModelId()))
+					.bodyName(makeMasterRepository.getBodyNameById(req.getBodyTypeId()))
+					.vehUsageName(makeMasterRepository.getVehicleUsage(req.getVehicleUsage()))
 					.build();				
 			motorDataDetailRepository.save(motorDataDetail);
 				
@@ -408,18 +411,17 @@ public class MadisonQuoteServiceImpl implements MadisonQuoteService{
 							.bodyId(m.getBody().toString())
 							.applicationNo(m.getApplicationNo().toString())
 							.vehicleId(m.getVehicleId().toString())
-							.makeId(makeMasterRepository.getMakeNameById(m.getMakeId().toString()))
-							.modelId(makeMasterRepository.getModelNameById(m.getMakeId().toString(),m.getModelId().toString()))
-							.bodyId(makeMasterRepository.getBodyNameById(m.getBody().toString()))
-							.vehicleUseageId(makeMasterRepository.getVehicleUsage(m.getVehicleType().toString()))
+							.makeId(StringUtils.isBlank(m.getMakeName())?"":m.getMakeName())
+							.modelId(StringUtils.isBlank(m.getModelName())?"":m.getModelName())
+							.bodyId(StringUtils.isBlank(m.getBodyName())?"":m.getBodyName())
+							.vehicleUseageId(StringUtils.isBlank(m.getVehUsageName())?"":m.getVehUsageName())
 							.PolicyEndate(sdf.format(m.getExpiryDate()))
 							.PolicyStartDate(sdf.format(m.getInceptionDate()))
 							.policyType(m.getPolicytype().toString())
 							.currencyType(m.getCurrencyType())
 							.quoteNo(m.getQuoteNo().toString())
 							.productId(m.getProductId().toString())
-							.customerId(m.getCustomerId().toString())
-							
+							.customerId(m.getCustomerId().toString())							
 							.build();
 					list.add(vehicleInfo);
 				}

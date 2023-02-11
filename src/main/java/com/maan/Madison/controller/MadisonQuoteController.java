@@ -69,18 +69,14 @@ public class MadisonQuoteController {
 	@PostMapping("/buypolicy")
 	public CommonResponse doBuypolicy(@RequestBody BuyPolicyRequest req) {
 		return service.doBuypolicy(req);
-		
 	}
 	
 	@PostMapping("/save/driver")
 	public CommonResponse saveDriver(@RequestBody VehDriverReq req) {
 		return service.saveDriver(req);
-		
 	}
-	
 	@GetMapping("/edit/driver")
 	public CommonResponse editDriver(@RequestParam ("applicationNo") String applicationNo,@RequestParam("vehicleId") String vehicleId){
-		return service.editDriver(applicationNo,vehicleId);
-		
+		return service.editDriver(applicationNo,vehicleId);	
 	}
 }
