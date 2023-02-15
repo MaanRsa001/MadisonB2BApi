@@ -37,4 +37,7 @@ public class QuoteRequest {
 	@JsonProperty("CustomerId")
 	private String customerId;
 	
+	@JsonProperty("ProductId")
+	private String productId;
+	
 }

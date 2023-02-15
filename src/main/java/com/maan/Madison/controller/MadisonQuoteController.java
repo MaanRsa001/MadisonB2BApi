@@ -35,7 +35,6 @@ public class MadisonQuoteController {
 		return service.getCustomerDetails(req);
 	}
 	
-	
 	@GetMapping("/getCustomerById")
 	public CommonResponse getCustomerById(@RequestParam ("customerId") String customerId) {
 		return service.getCustomerById(customerId);
@@ -75,6 +74,7 @@ public class MadisonQuoteController {
 	public CommonResponse saveDriver(@RequestBody VehDriverReq req) {
 		return service.saveDriver(req);
 	}
+	
 	@GetMapping("/edit/driver")
 	public CommonResponse editDriver(@RequestParam ("applicationNo") String applicationNo,@RequestParam("vehicleId") String vehicleId){
 		return service.editDriver(applicationNo,vehicleId);	

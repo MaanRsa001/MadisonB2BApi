@@ -36,16 +36,16 @@ public interface MotorMakeMasterRepository  extends JpaRepository<MotorMakeMaste
 	List<MotorMakeMaster> findByStatusOrderByMakeName(String status);
 	
 	@Query(value="select make_name from motor_make_master where make_Id =?1",nativeQuery=true)
-	String getMakeNameById(String makeId);
+	List<String> getMakeNameById(String makeId);
 	
 	@Query(value="select model_name from motor_model_master where make_Id =?1 and model_id=?2",nativeQuery=true)
-	String getModelNameById(String makeId,String modelId);
+	List<String> getModelNameById(String makeId,String modelId);
 	
 	@Query(value="select body_name from motor_bodytype_master where body_id =?1",nativeQuery=true)
-	String getBodyNameById(String bodyId);
+	List<String> getBodyNameById(String bodyId);
 	
 	@Query(value="select VEHICLETYPE_DESC from MOTOR_VEHICLETYPE_MASTER where VTYPE_ID=?1",nativeQuery=true)
-	String getVehicleUsage(String vehUsage);
+	List<String> getVehicleUsage(String vehUsage);
 	
 	
 	

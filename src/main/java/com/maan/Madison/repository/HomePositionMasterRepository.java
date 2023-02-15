@@ -12,6 +12,7 @@
 
 package com.maan.Madison.repository;
 
+import java.util.List;
 import java.util.Map;
 
 import javax.transaction.Transactional;
@@ -43,7 +44,7 @@ public interface HomePositionMasterRepository  extends JpaRepository<HomePositio
 	String getPremium(String applicationNo);
 	
 	@Query(value = "SELECT EXCESS_SIGN,EXCESS_PREMIUM FROM HOME_POSITION_MASTER WHERE APPLICATION_NO=?1",nativeQuery=true)
-	Map<String,Object> getExcessPremium(String appNo);
+	List<Map<String,Object>> getExcessPremium(String appNo);
 	
 	@Query(value ="SELECT POLICY_FEE_PERCENT FROM BRANCH_MASTER WHERE BRANCH_CODE=?1",nativeQuery=true)
 	String getPolicyfeesPercent(String branchCode);	
@@ -72,6 +73,18 @@ public interface HomePositionMasterRepository  extends JpaRepository<HomePositio
 	int updateHpmReferalBroker(String loginId, String applicationNo);
 
 	
+	@Query(value="SELECT NVL(PAYMENT_REDIR_URL,'') PAYMENT_REDIR_URL FROM PRODUCT_MASTER WHERE PRODUCT_ID='92'",nativeQuery=true)
+	String getPaymentUrl();
+	
+	@Query(value="SELECT NVL(IS_B2C,'N') IS_B2C FROM LOGIN_MASTER WHERE LOGIN_ID=?1",nativeQuery=true)
+	String checkIsB2C(String loginId);
+
+	HomePositionMaster findByQuoteNo(Long quoteNo);
+	
+	@Modifying
+	@Transactional
+	@Query(value = "UPDATE HOME_POSITION_MASTER SET REFERRAL_DESCRIPTION='',REMARKS='',ADMIN_REFERRAL_STATUS='',SUMMARY_REMARKS='' WHERE APPLICATION_NO=?1",nativeQuery=true)
+	int updateReferalRemarks(String applicationNo);		
 
 
 }

@@ -54,15 +54,24 @@ public interface MotorDataDetailRepository  extends JpaRepository<MotorDataDetai
 	MotorDataDetail findByApplicationNoAndVehicleId(Long appNo, Long vehId);
 
 
+	@Modifying
+	@Transactional
 	int deleteByApplicationNoAndVehicleId(Long appNo, Long vehId);
 
 	@Modifying
 	@Transactional
-	@Query(value = "UPDATE MOTOR_DATA_DETAIL SET INCEPTION_DATE=?1,EXPIRY_DATE=?2, POLICYTYPE=?3,CURRENCY_TYPE=?4,QUOTE_NO=?5 WHERE APPLICATION_NO=?6 AND PRODUCT_ID=?7",nativeQuery=true)
-	int updatePolicyDetailsByApplicationNo(Date policyStartDate, Date policyEndDate, Long policyType,
+	@Query(value = "UPDATE MOTOR_DATA_DETAIL SET INCEPTION_DATE=to_date(?1,'DD/MM/YYYY'),EXPIRY_DATE=to_date(?2,'DD/MM/YYYY'), POLICYTYPE=?3,CURRENCY_TYPE=?4,QUOTE_NO=?5 WHERE APPLICATION_NO=?6 AND PRODUCT_ID=?7",nativeQuery=true)
+	int updatePolicyDetailsByApplicationNo(String policyStartDate, String policyEndDate, Long policyType,
 			String currencyType, Long quoteNo,Long appNo,Long productId);
 	
 	@Query(value = "SELECT deduct_id, deduct_end FROM motor_deductible_master mfb WHERE BRANCH_CODE=?1 AND ?2 BETWEEN SEATING_START AND SEATING_END AND TYPE_OF_BODY_ID IN(SELECT TYPE_OF_BODY_ID FROM MOTOR_BODYTYPE_DETAIL WHERE VTYPE_ID=?3 AND BODY_ID=?4) AND TRUNC(EFFECTIVE_DATE) <= TRUNC(SYSDATE) AND TYPE_OF_BODY_ID||DEDUCT_ID||AMEND_ID IN(SELECT MAX(TYPE_OF_BODY_ID||DEDUCT_ID||AMEND_ID) FROM (SELECT DEDUCT_ID,DEDUCT_END,TYPE_OF_BODY_ID,AMEND_ID FROM MOTOR_DEDUCTIBLE_MASTER MFB WHERE BRANCH_CODE=?1 AND ?2 BETWEEN MFB.SEATING_START AND MFB.SEATING_END AND MFB.TYPE_OF_BODY_ID IN (SELECT TYPE_OF_BODY_ID FROM MOTOR_BODYTYPE_DETAIL WHERE VTYPE_ID=?3 AND BODY_ID=?4) AND DEDUCT_ID=?5 AND TRUNC(EFFECTIVE_DATE) <= TRUNC(SYSDATE)) GROUP BY type_of_body_id || deduct_id) ORDER BY DEDUCT_ID",nativeQuery=true)
 	List<Map<String,Object>> getDeductibleList(Object branchCode,Object seatCap,Object vehiType,Object bodyId,Object deductId);
+	
+	@Modifying
+	@Transactional
+	@Query(value ="UPDATE MOTOR_DATA_DETAIL SET REFERRAL_REMARKS=DECODE(REFERRAL_REMARKS,'','Sum Insured Limit Referral',REFERRAL_REMARKS||'~Sum Insured Limit Referral') WHERE SUMINSURED_VALUE_LOCAL>(Select Nvl(Insurance_End_Limit,0) From Login_User_Details LUDS Where Login_Id=?1 And Product_Id=?2 AND AMEND_ID=(select max (AMEND_ID) FROM Login_User_Details LUD where LUD.Login_Id=LUDS.Login_Id and LUD.Product_Id=LUDS.Product_Id)) AND APPLICATION_NO=?3",nativeQuery=true)
+	int updateMddReferal(String loginId,String productId,Long appNo);
+
+	List<MotorDataDetail> findByQuoteNo(Long valueOf);
 	
 }

@@ -97,7 +97,17 @@
 			<version>5.0.0</version><!--$NO-MVN-MAN-VER$ -->
 		</dependency>
 
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>2.6</version>
+		</dependency>
 		
+		<dependency>
+               <groupId>com.sun.mail</groupId>
+                <artifactId>javax.mail</artifactId>
+               <version>1.6.2</version>
+            </dependency>
 		
 	</dependencies>
 

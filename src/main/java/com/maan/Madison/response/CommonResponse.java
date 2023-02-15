@@ -13,5 +13,8 @@ public class CommonResponse {
 	
 	@JsonProperty("Response")
 	private Object response;
+	
+	@JsonProperty("Errors")
+	private Object errors;
 
 }

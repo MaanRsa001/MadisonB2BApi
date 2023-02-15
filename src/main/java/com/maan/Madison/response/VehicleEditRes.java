@@ -79,6 +79,13 @@ public class VehicleEditRes {
 	private String policyEndDate;
 	@JsonProperty("ProductId")
 	private String ProductId;
+	@JsonProperty("BodyName")
+	private String bodyName;
+	@JsonProperty("MakeName")
+	private String makeName;
+	@JsonProperty("ModelName")
+	private String modelName;
+	@JsonProperty("VehicleUsageName")
+	private String vehicleUsageName;
 	
-
 }

@@ -364,8 +364,8 @@ private static final long serialVersionUID = 1L;
     @Column(name="VEHICLE_USAGE_NAME", length=100)
     private String     vehUsageName ;
 
-    
-
+    @Column(name="IS_CLAIMDTL", length=1)
+    private String     isclaimdtl ;
 
 }
 

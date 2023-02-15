@@ -4,11 +4,19 @@ import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import javax.annotation.PostConstruct;
+import javax.mail.Message;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
 import javax.persistence.EntityManager;
 import javax.persistence.ParameterMode;
 import javax.persistence.PersistenceContext;
@@ -18,14 +26,18 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import com.maan.Madison.entity.HomePositionMaster;
+import com.maan.Madison.entity.MailMaster;
 import com.maan.Madison.entity.MotorDataDetail;
 import com.maan.Madison.entity.MotorPolicyDetails;
 import com.maan.Madison.entity.PersonalInfo;
 import com.maan.Madison.repository.HomePositionMasterRepository;
+import com.maan.Madison.repository.MailMasterRepository;
 import com.maan.Madison.repository.MotorDataDetailRepository;
 import com.maan.Madison.repository.MotorMakeMasterRepository;
 import com.maan.Madison.repository.MotorPolicyCoverDataRepository;
@@ -39,6 +51,7 @@ import com.maan.Madison.request.QuoteRequest;
 import com.maan.Madison.request.SaveVehicleReq;
 import com.maan.Madison.request.VehDriverReq;
 import com.maan.Madison.response.BuyPolicyCustomerReq;
+import com.maan.Madison.response.BuyPolicyResponse;
 import com.maan.Madison.response.CommonResponse;
 import com.maan.Madison.response.CreateQuoteRes;
 import com.maan.Madison.response.CustomerEditRes;
@@ -52,14 +65,19 @@ import com.maan.Madison.response.QuoteInfoRes;
 import com.maan.Madison.response.SaveVehicleRes;
 import com.maan.Madison.response.VehicleEditRes;
 import com.maan.Madison.response.VehicleInfoRes;
-import com.maan.Madison.response.VehicleEditRes.VehicleEditResBuilder;
+import com.maan.Madison.service.DocumentUploadService;
 import com.maan.Madison.service.MadisonQuoteService;
+import com.maan.Madison.utilityServiceImpl.ErrorList;
+import com.maan.Madison.utilityServiceImpl.MadisonInputValidation;
+import com.maan.Madison.utilityServiceImpl.SMTPAuthenticator;
 
 @Service
 public class MadisonQuoteServiceImpl implements MadisonQuoteService{
 	
 	
 	Logger log =LogManager.getLogger(MadisonQuoteServiceImpl.class);
+	
+	
 	
 	@Autowired
 	private CommonService cs;
@@ -79,6 +97,11 @@ public class MadisonQuoteServiceImpl implements MadisonQuoteService{
 	private MotorPolicyRepository motorPolicyRepository;
 	@PersistenceContext
 	private EntityManager em;
+	@Autowired
+	private MadisonInputValidation validation;
+	@Autowired
+	private DocumentUploadService docUploadService;
+	
 	
 	SimpleDateFormat sdf =new SimpleDateFormat("dd/mm/yyyy");
 	
@@ -100,7 +123,7 @@ public class MadisonQuoteServiceImpl implements MadisonQuoteService{
 							.nrc(StringUtils.isBlank(p.getNrc())?"":p.getNrc())
 							.passportNo(StringUtils.isBlank(p.getPassportNumber())?"":p.getPassportNumber())
 							.customerId(p.getCustomerId().toString())
-							.brokerCode(StringUtils.isBlank(p.getLoginId())?"":p.getLoginId())
+							.brokerCode(StringUtils.isBlank(p.getAgencyCode())?"":p.getAgencyCode())
 							.build();
 					resList.add(r);
 				});
@@ -141,7 +164,8 @@ public class MadisonQuoteServiceImpl implements MadisonQuoteService{
 						.passportNo(StringUtils.isBlank(info.getPassportNumber())?"":info.getPassportNumber())
 						.poBox(StringUtils.isBlank(info.getPobox())?"":info.getPobox())
 						.title(StringUtils.isBlank(info.getTitle())?"":info.getTitle())
-						.brokerCode(StringUtils.isBlank(info.getLoginId())?"":info.getLoginId())
+						.brokerCode(StringUtils.isBlank(info.getAgencyCode())?"":info.getAgencyCode())
+						.loginId(StringUtils.isBlank(info.getLoginId())?"":info.getLoginId())
 						.build();
 				res.setMessage("SUCCESS");	
 				res.setResponse(r);
@@ -163,24 +187,32 @@ public class MadisonQuoteServiceImpl implements MadisonQuoteService{
 		CommonResponse res = new CommonResponse();
 		CustomerSaveRes cusRes = new CustomerSaveRes();
 		try {
-			PersonalInfo personalInfo =PersonalInfo.builder()
-					.title(StringUtils.isBlank(req.getTitle())?"":req.getTitle())
-					.amendId(new BigDecimal(0))
-					.firstName(StringUtils.isBlank(req.getFirstName())?"":req.getFirstName())
-					.lastName(StringUtils.isBlank(req.getLastname())?"":req.getLastname())
-					.email(StringUtils.isBlank(req.getEmail())?"":req.getEmail())
-					.mobile(StringUtils.isBlank(req.getMobileno())?"":req.getMobileno())
-					.customerType(req.getCustomerTyp())
-					.loginId(StringUtils.isBlank(req.getBrokerCode())?"":req.getBrokerCode())
-					.dob(sdf.parse(req.getDateOfBirth()))
-					.customerId(StringUtils.isBlank(req.getCustomerId())?personalInfoRepository.getCustomerId():Long.valueOf(req.getCustomerId()))
-					.build();
-			Long customerId =personalInfoRepository.save(personalInfo).getCustomerId();
-			
-			res.setMessage("SUCCESS");
-			cusRes.setCustomerId(String.valueOf(customerId));
-			res.setResponse(cusRes);
-			
+			List<ErrorList> error =validation.validateCustomer(req);
+			if(CollectionUtils.isEmpty(error)) {
+				
+				String agencyCode =personalInfoRepository.getBrokerCode(req.getBrokerCode());
+				PersonalInfo personalInfo =PersonalInfo.builder()
+						.title(StringUtils.isBlank(req.getTitle())?"":req.getTitle())
+						.amendId(new BigDecimal(0))
+						.firstName(StringUtils.isBlank(req.getFirstName())?"":req.getFirstName())
+						.lastName(StringUtils.isBlank(req.getLastname())?"":req.getLastname())
+						.email(StringUtils.isBlank(req.getEmail())?"":req.getEmail())
+						.mobile(StringUtils.isBlank(req.getMobileno())?"":req.getMobileno())
+						.customerType(req.getCustomerTyp())
+						.loginId(StringUtils.isBlank(req.getBrokerCode())?"":req.getBrokerCode())
+						.dob(sdf.parse(req.getDateOfBirth()))
+						.customerId(StringUtils.isBlank(req.getCustomerId())?personalInfoRepository.getCustomerId():Long.valueOf(req.getCustomerId()))
+						.agencyCode(agencyCode)
+						.build();
+				Long customerId =personalInfoRepository.save(personalInfo).getCustomerId();
+				
+				res.setMessage("SUCCESS");
+				cusRes.setCustomerId(String.valueOf(customerId));
+				res.setResponse(cusRes);
+			}else {
+				res.setMessage("ERROR");
+				res.setErrors(error);
+			}
 		}catch (Exception e) {
 			log.error(e);
 			res.setMessage("FAILED");
@@ -202,11 +234,25 @@ public class MadisonQuoteServiceImpl implements MadisonQuoteService{
 			String branchCode =req.getQuoteRequest().getBranchCode();
 			quoteReq.setQuoteNo(quoteNo.toString());
 			quoteReq.setApplicationNo(applicationNo.toString());
+			String policyType=StringUtils.isBlank(quoteReq.getPolicyInfo().getPolicyType())?"":quoteReq.getPolicyInfo().getPolicyType();
+			String policyStartDate =quoteReq.getPolicyInfo().getPolicyStartState();
+			String policyEndtDate =quoteReq.getPolicyInfo().getPolicyEndDate();
+			String brokerCode =quoteReq.getBrokerCode();
+			String loginId =quoteReq.getLoginId();
+			String productId =quoteReq.getProductId();
+			String type="";
 			MotorPolicyDetails mpd =executionImpl.savePolicyDet(req);
-			motorDataDetailRepository.updatePolicyDetailsByApplicationNo(mpd.getPolicyStartDate(),mpd.getPolicyEndDate(),
+			
+			motorDataDetailRepository.updatePolicyDetailsByApplicationNo(policyStartDate,policyEndtDate,
 					mpd.getPolicyType(),mpd.getCurrencyType(),mpd.getQuoteNo(),mpd.getApplicationNo(),65L);
 			
 			HomePositionMaster hpm =executionImpl.saveHpm(req);
+			
+			if("admin".equalsIgnoreCase(quoteReq.getUserType())) {
+				type="referal";
+			}else if("broker".equalsIgnoreCase(quoteReq.getUserType())) {
+				type="Normal";
+			}
 
 			StoredProcedureQuery sp =em.createStoredProcedureQuery("MOTOR_PREMIUM_CALC_B2BV2")
 					.registerStoredProcedureParameter(1, String.class, ParameterMode.IN)
@@ -219,9 +265,12 @@ public class MadisonQuoteServiceImpl implements MadisonQuoteService{
 					.setParameter(2, applicationNo)
 					.setParameter(3, branchCode)
 					.setParameter(4,65L)
-					.setParameter(5, "Normal")
+					.setParameter(5, type)
 					.setParameter(6, null);					
 			sp.execute();
+			
+			motorDataDetailRepository.updateMddReferal(loginId, productId, applicationNo);
+			
 			StoredProcedureQuery sp1 =em.createStoredProcedureQuery("MOTOR_PREMIUM_CALC_B2BV2")
 					.registerStoredProcedureParameter(1, String.class, ParameterMode.IN)
 					.registerStoredProcedureParameter(2, Long.class, ParameterMode.IN)
@@ -233,13 +282,14 @@ public class MadisonQuoteServiceImpl implements MadisonQuoteService{
 					.setParameter(2, applicationNo)
 					.setParameter(3, branchCode)
 					.setParameter(4,65L)
-					.setParameter(5, "Normal")
+					.setParameter(5, type)
 					.setParameter(6, null);					
 			sp1.execute();
 						
 			List<MotorDataDetail> mdd =motorDataDetailRepository.findByApplicationNoAndReferralRemarksIsNotNull(applicationNo);
+			
 			if(CollectionUtils.isEmpty(mdd)) {						
-				String policyType =mdd.get(0).getPolicytype().toString();
+		
 				List<Map<String,Object>> opCover= motorPolicyCoverDataRepository.getOpttionalCover(applicationNo,branchCode,policyType);
 				String opCovers=opCover.stream().map(i ->i.get("Y_ID").toString()).collect(Collectors.joining("~"));
 				motorPolicyCoverDataRepository.updateOptionalCover(policyType, opCovers, applicationNo);
@@ -266,9 +316,13 @@ public class MadisonQuoteServiceImpl implements MadisonQuoteService{
 				comres.setResponse(quoteRes);
 				comres.setMessage("SUCCESS");
 			}else {
+				CompletableFuture<QuoteInfoRes> quoteInfo =executionImpl.getQuoteInfoRes(quoteReq.getCustomerId(),applicationNo);
+				CompletableFuture.allOf(quoteInfo).join();
+
 				String referalRemarks =StringUtils.isBlank(mdd.get(0).getReferralRemarks())?"":mdd.get(0).getReferralRemarks();
 				quoteRes.setReferalStatus("Y");
 				quoteRes.setReferalRemarks(referalRemarks);
+				quoteRes.setQuoteInfo(quoteInfo.get());
 				comres.setResponse(quoteRes);
 				comres.setMessage("REFERAL");
 				hpm.setReferralDescription(referalRemarks);
@@ -294,8 +348,9 @@ public class MadisonQuoteServiceImpl implements MadisonQuoteService{
 		Double overallPremium =0D;
 		try {
 			String premium =hpmRepo.getPremium(hpm.getApplicationNo().toString());
-			Map<String,Object> excess =hpmRepo.getExcessPremium(hpm.getApplicationNo().toString());
-			if(excess!=null && excess.size()>0) {
+			List<Map<String,Object>> excessList =hpmRepo.getExcessPremium(hpm.getApplicationNo().toString());
+			if(!CollectionUtils.isEmpty(excessList)) {
+				 Map<String,Object> excess =excessList.get(0);	
 				 excess_sign =excess.get("EXCESS_SIGN")==null?"":excess.get("EXCESS_SIGN").toString();
 				 excess_premium =excess.get("EXCESS_PREMIUM")==null?"0":excess.get("EXCESS_PREMIUM").toString();
 				if("-".equalsIgnoreCase(excess_sign))
@@ -345,6 +400,11 @@ public class MadisonQuoteServiceImpl implements MadisonQuoteService{
 			if(!CollectionUtils.isEmpty(list))
 				 excessAmount =list.get(0).get("DEDUCT_END")==null?"":list.get(0).get("DEDUCT_END").toString();
 		
+			List<String> makeArr=makeMasterRepository.getMakeNameById(req.getMakeId());
+			List<String> modelArr=makeMasterRepository.getModelNameById(req.getMakeId(),req.getModelId());
+			List<String> bodyArr=makeMasterRepository.getBodyNameById(req.getBodyTypeId());
+			List<String> vehUsageArr=makeMasterRepository.getVehicleUsage(req.getVehicleUsage());
+
 			MotorDataDetail motorDataDetail = MotorDataDetail.builder()
 					.applicationNo(Long.valueOf(applicationNo))
 					.vehicleId(vehicleId)
@@ -359,29 +419,25 @@ public class MadisonQuoteServiceImpl implements MadisonQuoteService{
 					.suminsuredValueLocal(Double.valueOf(req.getSumInsured()))
 					.vehicleType(Long.valueOf(req.getVehicleUsage()))
 					.agencyRepair("N")
-					.vehicleColor(Long.valueOf(req.getVehicleColor()))
+					.vehicleColor(StringUtils.isBlank(req.getVehicleColor())?null:Long.valueOf(req.getVehicleColor()))
 					.leased(StringUtils.isBlank(req.getLeasedYn())?"N":req.getLeasedYn())
 					.bankId(StringUtils.isBlank(req.getBankOfFinance())?null:Long.valueOf(req.getBankOfFinance()))
 					.registrationNo(req.getRegistrationNo())
 					.chassisNo(req.getChassisNo())
 					.engineNumber(StringUtils.isBlank(req.getEngineNo())?"":req.getEngineNo())
 					.noOfClaims(StringUtils.isBlank(req.getNoOfClaims())?null:Long.valueOf(req.getNoOfClaims()))
-					.cubicCapacity(Long.valueOf(req.getEngineCapacity()))
+					.cubicCapacity(StringUtils.isBlank(req.getEngineCapacity())?null:Long.valueOf(req.getEngineCapacity()))
 					.entryDate(new Date())
 					.status("Y")
 					.electricalSi(StringUtils.isBlank(req.getElectricalAccesAmt())?null:Long.valueOf(req.getElectricalAccesAmt()))
 					.nonelectricalSi(StringUtils.isBlank(req.getNonElectricalAccesAmt())?null:Long.valueOf(req.getNonElectricalAccesAmt()))
-					.inceptionDate(StringUtils.isBlank(req.getPolicyStartDate())?null:sdf.parse(req.getPolicyStartDate()))
-					.expiryDate(StringUtils.isBlank(req.getPolicyEndDate())?null:sdf.parse(req.getPolicyEndDate()))
-					.policytype(Long.valueOf(req.getPolicyType()))
-					.currencyType(req.getCurrencyType())
 					.customerType(pi.getCustomerType())
 					.deductibleId(Long.valueOf(req.getExcessLimit()))
 					.deductibleAmount(Long.valueOf(excessAmount))
-					.makeName(makeMasterRepository.getMakeNameById(req.getMakeId()))
-					.modelName(makeMasterRepository.getModelNameById(req.getMakeId(),req.getModelId()))
-					.bodyName(makeMasterRepository.getBodyNameById(req.getBodyTypeId()))
-					.vehUsageName(makeMasterRepository.getVehicleUsage(req.getVehicleUsage()))
+					.makeName(CollectionUtils.isEmpty(makeArr)?"":makeArr.get(0))
+					.modelName(CollectionUtils.isEmpty(modelArr)?"":modelArr.get(0))
+					.bodyName(CollectionUtils.isEmpty(bodyArr)?"":bodyArr.get(0))
+					.vehUsageName(CollectionUtils.isEmpty(vehUsageArr)?"":vehUsageArr.get(0))
 					.build();				
 			motorDataDetailRepository.save(motorDataDetail);
 				
@@ -415,11 +471,7 @@ public class MadisonQuoteServiceImpl implements MadisonQuoteService{
 							.modelId(StringUtils.isBlank(m.getModelName())?"":m.getModelName())
 							.bodyId(StringUtils.isBlank(m.getBodyName())?"":m.getBodyName())
 							.vehicleUseageId(StringUtils.isBlank(m.getVehUsageName())?"":m.getVehUsageName())
-							.PolicyEndate(sdf.format(m.getExpiryDate()))
-							.PolicyStartDate(sdf.format(m.getInceptionDate()))
-							.policyType(m.getPolicytype().toString())
-							.currencyType(m.getCurrencyType())
-							.quoteNo(m.getQuoteNo().toString())
+							.quoteNo(m.getQuoteNo()==null?"":m.getQuoteNo().toString())
 							.productId(m.getProductId().toString())
 							.customerId(m.getCustomerId().toString())							
 							.build();
@@ -435,6 +487,7 @@ public class MadisonQuoteServiceImpl implements MadisonQuoteService{
 			res.setMessage("FAILED");
 			res.setResponse(null);
 			log.error(e);
+			e.printStackTrace();
 		}
 		return res;
 	}
@@ -449,31 +502,35 @@ public class MadisonQuoteServiceImpl implements MadisonQuoteService{
 					.bankOfFinance(mdd.getBankId()==null?"":mdd.getBankId().toString())
 					.bodyTypeId(mdd.getBody().toString())
 					.chassisNo(mdd.getChassisNo())
-					.driverDateOfBirth(mdd.getDriverDob()==null?"":sdf.format(mdd.getDriverDob()))
+					//.driverDateOfBirth(mdd.getDriverDob()==null?"":sdf.format(mdd.getDriverDob()))
 					.electricalAccesAmt(mdd.getElectricalSi()==null?"":mdd.getElectricalSi().toString())
 					.engineCapacity(mdd.getCubicCapacity()==null?"":mdd.getCubicCapacity().toString())
 					.engineNo(mdd.getEngineNumber())
-					.excessLimit(mdd.getDeductibleAmount()==null?"":mdd.getDeductibleAmount().toString())
-					.leasedYn(mdd.getLeased())
+					.excessLimit(mdd.getDeductibleId()==null?"":mdd.getDeductibleId().toString())
+					.leasedYn(StringUtils.isBlank(mdd.getLeased())?"":mdd.getLeased())
 					.licenseNo(StringUtils.isBlank(mdd.getDriverId())?"":mdd.getDriverId())
 					.makeId(mdd.getMakeId().toString())
 					.modelId(mdd.getModelId().toString())
 					.NonElectricalAccesAmt(mdd.getNonelectricalSi()==null?"":mdd.getNonelectricalSi().toString())
-					.noOfClaims(mdd.getNoOfClaims().toString())
-					.previousClaimYN(mdd.getClaimyn())
+					.noOfClaims(mdd.getNoOfClaims()==null?"":mdd.getNoOfClaims().toString())
+					//.previousClaimYN(mdd.getClaimyn())
 					.ProductId(mdd.getProductId().toString())
 					.registrationNo(mdd.getRegistrationNo())
 					.seatingCapacity(mdd.getSeatingCapacity().toString())
-					.sumInsured(mdd.getVehicleColor().toString())
-					.quoteNo(mdd.getQuoteNo().toString())
-					.policyEndDate(sdf.format(mdd.getExpiryDate()))
-					.policyStartDate(sdf.format(mdd.getInceptionDate()))
-					.policyType(mdd.getPolicytype().toString())
-					.currencyType(mdd.getCurrencyType())
+					.sumInsured(mdd.getSuminsuredValueLocal().toString())
+					//.quoteNo(mdd.getQuoteNo().toString())
+					//.policyEndDate(sdf.format(mdd.getExpiryDate()))
+					//.policyStartDate(sdf.format(mdd.getInceptionDate()))
+					//.policyType(mdd.getPolicytype().toString())
+					//.currencyType(mdd.getCurrencyType())
 					.vehicleUsage(mdd.getVehicleType().toString())
 					.manufacureYear(mdd.getManufactureYear()==null?"":mdd.getManufactureYear())
 					.vehicleColor(mdd.getVehicleColor()==null?"":mdd.getVehicleColor().toString())
 					.vehicleId(mdd.getVehicleId().toString())
+					.modelName(mdd.getModelName())	
+					.makeName(mdd.getMakeName())
+					.bodyName(mdd.getBodyName())
+					.vehicleUsageName(mdd.getVehUsageName())
 					.build();
 			res.setMessage("SUCCESS");
 			res.setResponse(response);
@@ -481,6 +538,7 @@ public class MadisonQuoteServiceImpl implements MadisonQuoteService{
 			res.setMessage("FAILED");
 			res.setResponse(null);
 			log.error(e);
+			e.printStackTrace();
 		}
 		return res;
 	}
@@ -504,18 +562,22 @@ public class MadisonQuoteServiceImpl implements MadisonQuoteService{
 	public CommonResponse doBuypolicy(BuyPolicyRequest req) {
 		CommonResponse res = new CommonResponse();
 		log.info("buypolicy request : "+cs.reqPrint(req));
+		String encrPayUrl="";
 		try {
 			BuyPolicyCustomerReq cusReq =req.getCustomer();
+			
+			Long quoteNo =Long.valueOf(req.getQuoteNo());
+			HomePositionMaster hpm=hpmRepo.findByQuoteNo(quoteNo);
 			String installmentYn =StringUtils.isBlank(req.getInstallmentYn())?"":req.getInstallmentYn();
 			hpmRepo.updateMddPolicyDate(req.getPolicyStartDate(),req.getApplicationNo());
 			hpmRepo.updateMpdPolicyDate(req.getPolicyStartDate(),req.getApplicationNo());
-			hpmRepo.updateHpmPolicyDate(req.getPolicyStartDate(),req.getBranchCode(),installmentYn,req.getApplicationNo());
-			if("Y".equalsIgnoreCase(req.getReferalQuoteYn())) {
-				HomePositionMaster hpm =hpmRepo.findByApplicationNo(Long.valueOf(req.getApplicationNo()));
-				hpmRepo.updateHpmReferalBroker(hpm.getLoginId(),req.getApplicationNo());
-			}
+			hpmRepo.updateHpmPolicyDate(req.getPolicyStartDate(),hpm.getBranchCode(),installmentYn,req.getApplicationNo());
 			
-			Map<String,Object> map =personalInfoRepository.getAgencyCodeAndOaCode(req.getLoginid());
+			if("N".equalsIgnoreCase(req.getReferalQuoteYn()))
+				hpmRepo.updateReferalRemarks(req.getApplicationNo());
+			
+			
+			Map<String,Object> map =personalInfoRepository.getAgencyCodeAndOaCode(hpm.getLoginId());
 			
 			PersonalInfo personalInfo =PersonalInfo.builder()
 					.title(cusReq.getTitle())
@@ -553,13 +615,39 @@ public class MadisonQuoteServiceImpl implements MadisonQuoteService{
 			
 			
 			if("Y".equalsIgnoreCase(req.getEmailQuoteYn())){
-				
+				docUploadService.sendReferalQuoteMail(req);
 			}else if("Y".equalsIgnoreCase(req.getReferalQuoteYn())){
-				
+				hpmRepo.updateHpmReferalBroker(hpm.getLoginId(),req.getApplicationNo());
 			}else {
-				
-				
+				if("Y".equalsIgnoreCase(req.getGeneratePolicyYn())) {
+					String url=hpmRepo.getPaymentUrl();
+					try {
+						String paymentType="madisonPay"; 
+						String type="";
+						String stat =hpmRepo.checkIsB2C(hpm.getLoginId());
+						if("Y".equalsIgnoreCase(stat))
+							type="b2c";
+						else
+							type="b2b";
+						String encrData=new BCryptPasswordEncoder().encode("quoteNo="+req.getQuoteNo()+"~~paymentType="+paymentType+"~~productId="+hpm.getProductId()+"~~brokertype="+type+"~~logintype=b2b~~branchCode="+req.getBranchCode());
+						encrPayUrl=url+encrData;
+						
+						log.info("Payment encode url :"+encrPayUrl);
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+					
+				} 
 			}
+			
+			BuyPolicyResponse buyPolicyResponse =BuyPolicyResponse.builder()
+					.applicationNo(hpm.getApplicationNo().toString())
+					.quoteNo(quoteNo.toString())
+					.productId(hpm.getQuoteNo().toString())
+					.redirectUrl(encrPayUrl)
+					.build();
+			res.setResponse(buyPolicyResponse);
+			
 			
 		}catch (Exception e) {
 			log.error(e);
@@ -568,6 +656,7 @@ public class MadisonQuoteServiceImpl implements MadisonQuoteService{
 		return res;
 	}
 
+	
 	@Override
 	public CommonResponse saveDriver(VehDriverReq req) {
 		CommonResponse res =new  CommonResponse();
@@ -582,6 +671,8 @@ public class MadisonQuoteServiceImpl implements MadisonQuoteService{
 			mdd.setInsCompany(StringUtils.isBlank(req.getInsCompany())?"":req.getInsCompany());
 			mdd.setNoClaimBonus(StringUtils.isBlank(req.getNoOfClaimBonus())?null:Long.valueOf(req.getNoOfClaimBonus()));
 			mdd.setClaimAmount(StringUtils.isBlank(req.getClaimAmt())?null:Long.valueOf(req.getClaimAmt()));
+			mdd.setIsclaimdtl(StringUtils.isBlank(req.getIsClaimDtl())?"N":req.getIsClaimDtl());
+			mdd.setOwnnerdriverYn(StringUtils.isBlank(req.getOwnnerdriverYn())?"N":req.getOwnnerdriverYn());
 			motorDataDetailRepository.save(mdd);
 			res.setMessage("SUCCESS");
 			res.setResponse("Driver inserted successfully");
@@ -601,13 +692,15 @@ public class MadisonQuoteServiceImpl implements MadisonQuoteService{
 			MotorDataDetail mdd =motorDataDetailRepository.findByApplicationNoAndVehicleId(Long.valueOf(applicationNo), Long.valueOf(vehicleId));			
 			DriverEditRes driverEditRes =DriverEditRes.builder()
 				.driverId(mdd.getDriverId())
-				.DriverDob(sdf.format(mdd.getDriverDob()))
+				.DriverDob(mdd.getDriverDob()==null?"":sdf.format(mdd.getDriverDob()))
 				.claimyn(mdd.getClaimyn())
 				.insCompany(StringUtils.isBlank(mdd.getInsCompany())?"":mdd.getInsCompany())
 				.claimAmt(mdd.getClaimAmount()==null?"":mdd.getClaimAmount().toString())	
 				.prePolicyExpDate(mdd.getPrevPolicyexpirydate()==null?"":sdf.format(mdd.getPrevPolicyexpirydate()))
 				.policyNo(StringUtils.isBlank(mdd.getPrevPolicyno())?"":mdd.getPrevPolicyno())
 				.noOfClaimBonus(mdd.getNoClaimBonus()==null?"":mdd.getNoClaimBonus().toString())
+				.isClaimDtl(mdd.getIsclaimdtl()==null?"":mdd.getIsclaimdtl().toString())
+				.ownnerdriverYn(mdd.getOwnnerdriverYn())
 			.build();
 			res.setMessage("SUCCESS");
 			res.setResponse(driverEditRes);

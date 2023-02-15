@@ -1,5 +1,7 @@
 package com.maan.Madison.request;
 
+import javax.validation.constraints.NotBlank;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.Getter;
@@ -9,6 +11,7 @@ import lombok.Setter;
 @Getter
 public class VehDriverReq {
 	
+
 	@JsonProperty("ApplicationNo")
 	private String applicationNo;
 	@JsonProperty("VehicleId")
@@ -29,4 +32,10 @@ public class VehDriverReq {
 	private String claimAmt;
 	@JsonProperty("InsCompany")
 	private String insCompany;
+	@JsonProperty("IsClaimDtl")
+	private String isClaimDtl;
+	@JsonProperty("OwnnerdriverYn")
+	private String ownnerdriverYn;
 }
+
+

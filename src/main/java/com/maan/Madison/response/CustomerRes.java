@@ -29,4 +29,6 @@ public class CustomerRes {
 	private String customerId;
 	@JsonProperty("BrokerCode")
 	private String brokerCode;
+	@JsonProperty("LoginId")
+	private String loginId;
 }

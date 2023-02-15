@@ -49,4 +49,6 @@ public class CustomerEditRes {
 	private String companyRegNo;
 	@JsonProperty("BrokerCode")
 	private String brokerCode;
+	@JsonProperty("LoginId")
+	private String loginId;
 }

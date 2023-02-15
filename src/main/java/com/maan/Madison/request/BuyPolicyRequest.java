@@ -34,8 +34,6 @@ public class BuyPolicyRequest {
 	private String installmentYn;
 	@JsonProperty("GeneratePolicyYn")
 	private String generatePolicyYn;
-	@JsonProperty("LoginId")
-	private String loginid;
 	@JsonProperty("CustomerInfo")
 	private BuyPolicyCustomerReq customer;
 

@@ -33,4 +33,10 @@ public interface DropDownService {
 
 	CommonResponse getInsCompany();
 
+	CommonResponse getCity();
+
+	CommonResponse getDocuments(String productId);
+
+	CommonResponse getBrokerBranchList(String loginId);
+
 }

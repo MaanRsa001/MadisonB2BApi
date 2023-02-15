@@ -127,7 +127,7 @@ public class ParallelThreadExecutionImpl {
 						.policyType(Long.valueOf(policyInfo.getPolicyType()))
 						.currencyType(policyInfo.getCurrencyType())
 						.policyStartDate(sdf.parse(policyInfo.getPolicyStartState()))
-						.policyStartDate(sdf.parse(policyInfo.getPolicyEndDate()))	
+						.policyEndDate(sdf.parse(policyInfo.getPolicyEndDate()))	
 						.build();
 			value=motorPolicyRepository.save(policyDetails);
 		}catch (Exception e) {
@@ -173,7 +173,7 @@ public class ParallelThreadExecutionImpl {
 						.bodyType(m.getBody().toString())
 						.make(StringUtils.isBlank(m.getMakeName())?"":m.getMakeName())
 						.model(StringUtils.isBlank(m.getModelName())?"":m.getModelName())
-						.vehicleUsage(StringUtils.isBlank(m.getBodyName())?"":m.getBodyName())
+						.vehicleUsage(StringUtils.isBlank(m.getVehUsageName())?"":m.getVehUsageName())
 						.bodyType(StringUtils.isBlank(m.getBodyName())?"":m.getBodyName())
 						.applicationNo(m.getApplicationNo().toString())
 						.quoteNo(m.getQuoteNo().toString())

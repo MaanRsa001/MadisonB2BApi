@@ -92,4 +92,20 @@ public class DropDownController {
 		return service.getInsCompany();
 	}
 	
+	@GetMapping("/get/city")
+	public CommonResponse getCity() {
+		return service.getCity();
+	}
+	
+	@GetMapping("/get/documents")
+	public CommonResponse getDocuments(@RequestParam("ProductId") String productId) {
+		return service.getDocuments(productId);
+	}
+	
+	@GetMapping("/get/broker/branch")
+	public CommonResponse getBrokerBranchList(@RequestParam("loginId") String loginId) {
+		return service.getBrokerBranchList(loginId);
+	}
+	
+	
 }

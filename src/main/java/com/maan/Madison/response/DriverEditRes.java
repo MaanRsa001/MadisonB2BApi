@@ -29,4 +29,8 @@ public class DriverEditRes {
 	private String claimAmt;
 	@JsonProperty("InsCompany")
 	private String insCompany;
+	@JsonProperty("IsClaimDtl")
+	private String isClaimDtl;
+	@JsonProperty("OwnnerdriverYn")
+	private String ownnerdriverYn;
 }

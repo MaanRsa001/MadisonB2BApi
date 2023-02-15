@@ -23,10 +23,14 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.maan.Madison.entity.CityMaster;
+import com.maan.Madison.entity.DocumentMaster;
 import com.maan.Madison.entity.ListItemValue;
 import com.maan.Madison.entity.MotorFinanceBankMaster;
 import com.maan.Madison.entity.MotorMakeMaster;
 import com.maan.Madison.entity.MotorModelMaster;
+import com.maan.Madison.repository.CityMasterRepository;
+import com.maan.Madison.repository.DocumentMasterRepository;
 import com.maan.Madison.repository.ListItemValueRepository;
 import com.maan.Madison.repository.MotorFinanceBankMasterRepository;
 import com.maan.Madison.repository.MotorMakeMasterRepository;
@@ -49,6 +53,10 @@ public class DropDownServiceImpl implements DropDownService {
 	private MotorModelMasterRepository motorModelMasterRepository;
 	@Autowired
 	private MotorFinanceBankMasterRepository financeRepo;
+	@Autowired
+	private CityMasterRepository cityRepo;
+	@Autowired
+	private DocumentMasterRepository docMaster;
 
 	@Override
 	public CommonResponse getCurrencyType() {
@@ -436,6 +444,87 @@ public class DropDownServiceImpl implements DropDownService {
 		return res;
 	}
 
+	@Override
+	public CommonResponse getCity() {
+		CommonResponse res = new CommonResponse();
+		Set<DropDownRes> resList =new HashSet<DropDownRes>();
+		try {
+			List<CityMaster> list=cityRepo.findByStatusIgnoreCase("Y");
+			if(list.size()>0) {
+					list.forEach(p ->{
+					DropDownRes r =DropDownRes.builder()
+							.code(p.getCityId().toString())
+							.description(p.getCityName())
+							.build();
+					resList.add(r);
+					});
+				res.setMessage("SUCCESS");
+				res.setResponse(resList.stream().sorted(Comparator.comparing(DropDownRes ::getDescription)));
+			}else {
+				res.setMessage("FAILED");
+				res.setResponse(resList);
+			}
+		}catch (Exception e) {
+			log.error(e);
+			e.printStackTrace();
+		}
+		return res;
+	}
+
+	@Override
+	public CommonResponse getDocuments(String productId) {
+		CommonResponse res = new CommonResponse();
+		Set<DropDownRes> resList =new HashSet<DropDownRes>();
+		try {
+			List<DocumentMaster> list=docMaster.findByProductIdAndStatusIgnoreCase(productId,"Y");
+			if(list.size()>0) {
+					list.forEach(p ->{
+					DropDownRes r =DropDownRes.builder()
+							.code(p.getDocumentId().toString())
+							.description(p.getDocumentDesc())
+							.build();
+					resList.add(r);
+					});
+				res.setMessage("SUCCESS");
+				res.setResponse(resList.stream().sorted(Comparator.comparing(DropDownRes ::getDescription)));
+			}else {
+				res.setMessage("FAILED");
+				res.setResponse(resList);
+			}
+		}catch (Exception e) {
+			log.error(e);
+			e.printStackTrace();
+		}
+		return res;
+	}
+
+	@Override
+	public CommonResponse getBrokerBranchList(String loginId) {
+		CommonResponse res = new CommonResponse();
+		Set<DropDownRes> resList =new HashSet<DropDownRes>();
+		try {
+			List<Map<String,Object>> list=cityRepo.getBranchByLoginId(loginId);
+			if(list.size()>0) {
+					list.forEach(p ->{
+					DropDownRes r =DropDownRes.builder()
+							.code(p.get("BRANCH_ID")==null?"":p.get("BRANCH_ID").toString())
+							.description(p.get("BRANCH_NAME")==null?"":p.get("BRANCH_NAME").toString())
+							.build();
+					resList.add(r);
+					});
+					
+				res.setMessage("SUCCESS");
+				res.setResponse(resList.stream().sorted(Comparator.comparing(DropDownRes ::getDescription)));
+			}else {
+				res.setMessage("FAILED");
+				res.setResponse(resList);
+			}
+		}catch (Exception e) {
+			log.error(e);
+			e.printStackTrace();
+		}
+		return res;
+	}
 
 
 }

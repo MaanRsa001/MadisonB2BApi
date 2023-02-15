@@ -52,5 +52,4 @@ public class BuyPolicyCustomerReq {
 	@JsonProperty("PassportNo")
 	private String passportNo;
 	
-
 }
