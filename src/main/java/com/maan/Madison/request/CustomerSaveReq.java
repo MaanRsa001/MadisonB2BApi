@@ -31,5 +31,7 @@ public class CustomerSaveReq {
 	private String customerTyp;
 	@JsonProperty("BrokerCode")
 	private String BrokerCode;
+	@JsonProperty("LoginId")
+	private String loginId;
 
 }

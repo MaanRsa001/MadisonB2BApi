@@ -49,21 +49,9 @@ public class DocumentUploadController {
 	ObjectMapper mapper = new ObjectMapper();
 	
 	@PostMapping("/document/upload")
-	public CommonResponse documentUpload(@RequestParam("file") MultipartFile files ,@RequestParam("uploadReq") String uploadReq) {
-		log.info("Upload request :"+cs.reqPrint(uploadReq));
-		CommonResponse res = new CommonResponse();
-		DocumentUploadReq req =new DocumentUploadReq();
-		try {
-			if(StringUtils.isNotBlank(uploadReq)) {
-				req =mapper.readValue(uploadReq, DocumentUploadReq.class);
-			}
-	        res=service.documentUpload(files,req);
-	        //res.setMessage("SUCCESS");
-	       // res.setResponse("File uploaded successfully");
-		}catch (Exception e) {
-			e.printStackTrace();
-		}
-		return res;
+	public CommonResponse documentUpload(@RequestBody List<DocumentUploadReq> req ) {	
+	      return service.documentUpload(req);
+	     
 	}
 	
 	@PostMapping("/get/document/details")
@@ -74,20 +62,13 @@ public class DocumentUploadController {
 	@GetMapping("/document/download")
 	public ResponseEntity<Resource> download(@RequestParam("FilePath") String filePath) throws IOException {
 		File file = new File(filePath);
-		String file_name=FilenameUtils.getBaseName(filePath);
-		String file_extension =FilenameUtils.getExtension(filePath);
-		
+
 	    InputStreamResource resource = new InputStreamResource(new FileInputStream(file));
 	    
-	    HttpHeaders header = new HttpHeaders();
-        header.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename="+file_name+"."+file_extension+"");
-        header.add("Cache-Control", "no-cache, no-store, must-revalidate");
-        header.add("Pragma", "no-cache");
-        header.add("Expires", "0");
 	    return ResponseEntity.ok()
-	            .headers(header)
+	            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getName() + "\"")
 	            .contentLength(file.length())
-	            .contentType(MediaType.APPLICATION_OCTET_STREAM)
+	            .contentType(org.springframework.http.MediaType.APPLICATION_OCTET_STREAM)
 	            .body(resource);
 	}
 	

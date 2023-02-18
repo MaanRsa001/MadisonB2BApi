@@ -44,5 +44,14 @@ public class PaymentController {
 		return service.cardPayment(req);
 	}
 	
-
+	@PostMapping("/cash/payment")
+	public CommonResponse cashPayment(@RequestBody MadionPaymentRequest req) {
+		return service.cashPayment(req);
+	}
+	
+	@PostMapping("/cheque/payment")
+	public CommonResponse chequePayment(@RequestBody MadionPaymentRequest req) {
+		return service.chequePayment(req);
+	}
+	
 }

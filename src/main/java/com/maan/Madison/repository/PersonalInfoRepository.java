@@ -45,4 +45,7 @@ public interface PersonalInfoRepository  extends JpaRepository<PersonalInfo,Long
 
 	@Query(value ="SELECT AGENCY_CODE,OA_CODE FROM LOGIN_MASTER WHERE LOGIN_ID=?1",nativeQuery=true)
 	Map<String,Object> getAgencyCodeAndOaCode(String loginid);
+
+	List<PersonalInfo> findByAgencyCodeAndCustomerTypeIgnoreCaseOrderByEntryDateDesc(String brokerCode,
+			String customerType);
 }

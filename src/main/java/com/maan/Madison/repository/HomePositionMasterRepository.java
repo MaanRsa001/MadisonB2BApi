@@ -64,7 +64,7 @@ public interface HomePositionMasterRepository  extends JpaRepository<HomePositio
 	
 	@Modifying
 	@Transactional
-	@Query(value = "UPDATE HOME_POSITION_MASTER SET INCEPTION_DATE=TO_DATE (?1,'DD/MM/YYYY'),POLICY_TERM=TRUNC(EXPIRY_DATE)-TRUNC(TO_DATE(?1,'DD/MM/YYYY')),BROKER_BRANCH=?3,INSTALLMENT_YN=?4 WHERE APPLICATION_NO=?5",nativeQuery=true)
+	@Query(value = "UPDATE HOME_POSITION_MASTER SET INCEPTION_DATE=TO_DATE (?1,'DD/MM/YYYY'),POLICY_TERM=TRUNC(EXPIRY_DATE)-TRUNC(TO_DATE(?1,'DD/MM/YYYY')),BROKER_BRANCH=?2,INSTALLMENT_YN=?3 WHERE APPLICATION_NO=?4",nativeQuery=true)
 	int updateHpmPolicyDate(String policyStartDate,String brokerBranch,String installmentYn,String applicatioNo);
 
 	@Modifying
@@ -84,7 +84,36 @@ public interface HomePositionMasterRepository  extends JpaRepository<HomePositio
 	@Modifying
 	@Transactional
 	@Query(value = "UPDATE HOME_POSITION_MASTER SET REFERRAL_DESCRIPTION='',REMARKS='',ADMIN_REFERRAL_STATUS='',SUMMARY_REMARKS='' WHERE APPLICATION_NO=?1",nativeQuery=true)
-	int updateReferalRemarks(String applicationNo);		
+	int updateReferalRemarks(String applicationNo);
 
+	@Query(value="SELECT * FROM HOME_POSITION_MASTER WHERE QUOTE_NO=?1",nativeQuery=true)
+	Map<String,Object> getPaymentStatusByQuoteNo(String quoteNo);		
 
+	@Query(value="Select policy_generate(?,?,?,?) from dual",nativeQuery=true)
+	String  getSequence(String quoteNo,String branchCode,String type,String productId);		
+
+	@Query(value="SELECT LOGIN_ID,APPLICATION_ID FROM HOME_POSITION_MASTER WHERE QUOTE_NO=?1",nativeQuery=true)
+	Map<String,Object> getApplicationId(String quoteNo);
+	
+	@Query(value="SELECT CERTIFICATE_NO,VEHICLE_ID FROM motor_data_detail WHERE QUOTE_NO=?1",nativeQuery=true)
+	List<Map<String,Object>> getCertificatNo(String quoteNo);
+	
+	@Modifying
+	@Transactional
+	@Query(value ="UPDATE motor_data_detail SET CERTIFICATE_NO=?1 WHERE QUOTE_NO=?2 AND VEHICLE_ID=?3 ",nativeQuery=true)
+	int updateCertificateNo(String certificateNo,String quoteNo,String vehicleId);
+	
+	@Query(value="select pd.PAYMENT_TYPE from PAYMENT_DETAIL pd where QUOTE_NO=?1 and pd.MERCHANT_REFERENCE = (select max(pdm.MERCHANT_REFERENCE) from payment_detail pdm where PDM.QUOTE_NO=PD.QUOTE_NO)",nativeQuery=true)
+	String getPaymentMode(String quoteNo);
+	
+	@Query(value = "select TRUNC(to_date(?2,'DD/MM/YYYY')) - TRUNC(to_date(?1,'DD/MM/YYYY')) as POLICY_TERM, TO_CHAR(to_date(?1,'DD/MM/YYYY'),'Q') as QUARTER_ID from dual",nativeQuery=true)
+	Map<String,Object> getPolicyTermsAndQuarter(String inceptionDate, String expiryDate);
+	
+	@Modifying
+	@Transactional
+	@Query(value="INSERT INTO PAYMENT_PROCESS_DETAIL(SNO,POLICY_NO,QUOTE_NO,TYPE,STATUS,RESPONSE_TIME,REMARKS,LOGIN_ID,ALLOCATED_PERSON) VALUES ((SELECT NVL(MAX(SNO),0)+1 FROM PAYMENT_PROCESS_DETAIL),?1,?2,?3,?4,SYSDATE,?5,?6,?7)", nativeQuery=true)
+	int insertPaymentTrans(String policyno,String quoteno,String payType,String status,String remarks,String loginId,String allocatePer);
+	
+	
+	
 }

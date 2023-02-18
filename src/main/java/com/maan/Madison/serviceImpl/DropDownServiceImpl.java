@@ -12,7 +12,6 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
@@ -22,6 +21,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import com.maan.Madison.entity.CityMaster;
 import com.maan.Madison.entity.DocumentMaster;
@@ -38,6 +38,7 @@ import com.maan.Madison.repository.MotorModelMasterRepository;
 import com.maan.Madison.request.DeductibleReq;
 import com.maan.Madison.response.CommonResponse;
 import com.maan.Madison.response.DropDownRes;
+import com.maan.Madison.response.PaymentBankRes;
 import com.maan.Madison.service.DropDownService;
 
 @Service
@@ -476,7 +477,7 @@ public class DropDownServiceImpl implements DropDownService {
 		CommonResponse res = new CommonResponse();
 		Set<DropDownRes> resList =new HashSet<DropDownRes>();
 		try {
-			List<DocumentMaster> list=docMaster.findByProductIdAndStatusIgnoreCase(productId,"Y");
+			List<DocumentMaster> list=docMaster.findByProductIdAndUserTypeIgnoreCaseAndStatusIgnoreCase(productId,"others","Y");
 			if(list.size()>0) {
 					list.forEach(p ->{
 					DropDownRes r =DropDownRes.builder()
@@ -518,6 +519,63 @@ public class DropDownServiceImpl implements DropDownService {
 			}else {
 				res.setMessage("FAILED");
 				res.setResponse(resList);
+			}
+		}catch (Exception e) {
+			log.error(e);
+			e.printStackTrace();
+		}
+		return res;
+	}
+
+	@SuppressWarnings("unused")
+	@Override
+	public CommonResponse getPaymentType() {
+		CommonResponse res = new CommonResponse();
+		Set<DropDownRes> resList =new HashSet<DropDownRes>();
+		try {
+			if(true) {
+				resList.add(new DropDownRes("6","Credit Card /Debit Card") );
+				resList.add(new DropDownRes("1","Cash") );
+				resList.add(new DropDownRes("2","Cheque") );
+				resList.add(new DropDownRes("9","Credit Note") );
+				resList.add(new DropDownRes("101","MTN Mobile Money") );
+				resList.add(new DropDownRes("102","Airtel Money") );
+				res.setMessage("SUCCESS");
+				res.setResponse(resList.stream().sorted(Comparator.comparing(DropDownRes ::getCode)));
+			}else {
+				res.setMessage("FAILED");
+				res.setResponse(resList);
+			}
+		}catch (Exception e) {
+			log.error(e);
+			e.printStackTrace();
+		}
+		return res;
+	}
+
+	@Override
+	public CommonResponse getPaymentBank() {
+		CommonResponse res = new CommonResponse();
+		try {
+			List<Map<String,Object>> list =listItemValueRepository.getPaymentBank();
+			if(CollectionUtils.isEmpty(list)) {
+				Map<String,Object> m =list.get(0);
+				PaymentBankRes paymentBank =PaymentBankRes.builder()
+						.accountName(m.get("ACCOUNT_HOLDER")==null?"":m.get("ACCOUNT_HOLDER").toString())
+						.accountNo(m.get("ACCOUNT_NUMBER")==null?"":m.get("ACCOUNT_NUMBER").toString())
+						.bankName(m.get("BANK_NAME")==null?"":m.get("BANK_NAME").toString())
+						.bankId(m.get("PAYMENTBANK_ID")==null?"":m.get("PAYMENTBANK_ID").toString())
+						.branch(m.get("BRANCH_NAME")==null?"":m.get("BRANCH_NAME").toString())
+						.branchCode(m.get("BRANCH_CODE")==null?"":m.get("BRANCH_CODE").toString())
+						.swiftCode(m.get("SWIFT_CODE")==null?"":m.get("SWIFT_CODE").toString())
+						.currency(m.get("CURRENCY_TYPE")==null?"":m.get("CURRENCY_TYPE").toString())
+					.build();
+				
+				res.setMessage("SUCCESS");
+				res.setResponse(paymentBank);
+			}else {
+				res.setMessage("FAILED");
+				res.setResponse(null);
 			}
 		}catch (Exception e) {
 			log.error(e);

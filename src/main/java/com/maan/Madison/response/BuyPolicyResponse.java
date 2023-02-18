@@ -15,12 +15,19 @@ import lombok.Setter;
 @Builder
 public class BuyPolicyResponse {
 	
-	@JsonProperty("RedirectUrl")
-	private String redirectUrl;
 	@JsonProperty("QuoteNo")
 	private String quoteNo;
-	@JsonProperty("ApplicationNo")
-	private String applicationNo;
-	@JsonProperty("ProductId")
-	private String productId;
+	@JsonProperty("Product")
+	private String product;
+	@JsonProperty("CustomerName")
+	private String customerName;
+	@JsonProperty("MobileNo")
+	private String mobileNo;
+	@JsonProperty("Email")
+	private String email;
+	@JsonProperty("Premium")
+	private String Premium;
+	@JsonProperty("BranchCode")
+	private String branchCode;
+	
 }

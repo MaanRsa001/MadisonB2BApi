@@ -1,5 +1,7 @@
 package com.maan.Madison.request;
 
+import java.io.Serializable;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.AllArgsConstructor;
@@ -11,8 +13,12 @@ import lombok.Setter;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class DocumentUploadReq {
+public class DocumentUploadReq implements Serializable{
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	@JsonProperty("QuoteNo")
 	private String quoteNo;
 	@JsonProperty("ProductId")
@@ -23,5 +29,9 @@ public class DocumentUploadReq {
 	private String documentTypeId;
 	@JsonProperty("Description")
 	private String description;
+	@JsonProperty("FileName")
+	private String fileName;
+	@JsonProperty("Base64File")
+	private String base64File;
 	
 }

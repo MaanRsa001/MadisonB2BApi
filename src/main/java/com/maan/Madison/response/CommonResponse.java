@@ -1,10 +1,17 @@
 package com.maan.Madison.response;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.maan.Madison.utilityServiceImpl.ErrorList;
+
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class CommonResponse {
 	
 
@@ -15,6 +22,6 @@ public class CommonResponse {
 	private Object response;
 	
 	@JsonProperty("Errors")
-	private Object errors;
+	private List<ErrorList> errors;
 
 }

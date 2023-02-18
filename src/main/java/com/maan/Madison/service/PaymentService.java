@@ -15,4 +15,8 @@ public interface PaymentService {
 
 	CommonResponse mtnPaymentStatus(String reference_no);
 
-}
+	CommonResponse cashPayment(MadionPaymentRequest req);
+
+	CommonResponse chequePayment(MadionPaymentRequest req);
+
+}	

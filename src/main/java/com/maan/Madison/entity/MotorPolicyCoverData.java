@@ -132,7 +132,7 @@ private static final long serialVersionUID = 1L;
     private String     currencyId ;
 
     @Column(name="USD_RATE")
-    private Long usdRate ;
+    private Double usdRate ;
 
 
     //--- ENTITY LINKS ( RELATIONSHIP )

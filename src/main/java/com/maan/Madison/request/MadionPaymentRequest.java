@@ -33,12 +33,14 @@ public class MadionPaymentRequest {
 	private String bankName;
 	@JsonProperty("MicrCode")
 	private String micrCode;
-	@JsonProperty("MtnMobileNo")
-	private String mtnMobileNo;
+	@JsonProperty("MobileNo")
+	private String mobileNo;
 	@JsonProperty("InstallmentYN")
 	private String installmentYN;
 	@JsonProperty("ChequeNo")
 	private String chequeNo;
+	@JsonProperty("PaymentType")
+	private String paymentType;
 }
 	
 	

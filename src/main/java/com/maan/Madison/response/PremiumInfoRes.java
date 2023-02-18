@@ -21,5 +21,10 @@ public class PremiumInfoRes {
 	private String overAllPremium;
 	@JsonProperty("Deductibles")
 	private String deductibles;
-
+	@JsonProperty("MinimumPremiumAdjust")
+	private String minimumPremiumAdjust;
+	@JsonProperty("BasePremiumRate")
+	private String basePremiumRate;
+	@JsonProperty("DeductiblesRate")
+	private String deductiblesRate;
 }

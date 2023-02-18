@@ -4,19 +4,11 @@ import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import javax.annotation.PostConstruct;
-import javax.mail.Message;
-import javax.mail.Session;
-import javax.mail.Transport;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
 import javax.persistence.EntityManager;
 import javax.persistence.ParameterMode;
 import javax.persistence.PersistenceContext;
@@ -26,18 +18,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import com.maan.Madison.entity.HomePositionMaster;
-import com.maan.Madison.entity.MailMaster;
 import com.maan.Madison.entity.MotorDataDetail;
 import com.maan.Madison.entity.MotorPolicyDetails;
 import com.maan.Madison.entity.PersonalInfo;
 import com.maan.Madison.repository.HomePositionMasterRepository;
-import com.maan.Madison.repository.MailMasterRepository;
 import com.maan.Madison.repository.MotorDataDetailRepository;
 import com.maan.Madison.repository.MotorMakeMasterRepository;
 import com.maan.Madison.repository.MotorPolicyCoverDataRepository;
@@ -69,7 +57,6 @@ import com.maan.Madison.service.DocumentUploadService;
 import com.maan.Madison.service.MadisonQuoteService;
 import com.maan.Madison.utilityServiceImpl.ErrorList;
 import com.maan.Madison.utilityServiceImpl.MadisonInputValidation;
-import com.maan.Madison.utilityServiceImpl.SMTPAuthenticator;
 
 @Service
 public class MadisonQuoteServiceImpl implements MadisonQuoteService{
@@ -111,7 +98,7 @@ public class MadisonQuoteServiceImpl implements MadisonQuoteService{
 		CommonResponse res =new CommonResponse();
 		ArrayList<CustomerRes> resList =new ArrayList<CustomerRes>();
 		try {
-			List<PersonalInfo> list=personalInfoRepository.findByLoginIdAndCustomerTypeIgnoreCaseOrderByEntryDateDesc(req.getBrokerCode(),req.getCustomerType());
+			List<PersonalInfo> list=personalInfoRepository.findByAgencyCodeAndCustomerTypeIgnoreCaseOrderByEntryDateDesc(req.getBrokerCode(),req.getCustomerType());
 			if(list.size()>0) {
 				list.forEach( p->{
 					String firstName =StringUtils.isBlank(p.getFirstName())?"":p.getFirstName();
@@ -189,8 +176,7 @@ public class MadisonQuoteServiceImpl implements MadisonQuoteService{
 		try {
 			List<ErrorList> error =validation.validateCustomer(req);
 			if(CollectionUtils.isEmpty(error)) {
-				
-				String agencyCode =personalInfoRepository.getBrokerCode(req.getBrokerCode());
+				//String agencyCode =personalInfoRepository.getBrokerCode(req.getBrokerCode());
 				PersonalInfo personalInfo =PersonalInfo.builder()
 						.title(StringUtils.isBlank(req.getTitle())?"":req.getTitle())
 						.amendId(new BigDecimal(0))
@@ -199,10 +185,9 @@ public class MadisonQuoteServiceImpl implements MadisonQuoteService{
 						.email(StringUtils.isBlank(req.getEmail())?"":req.getEmail())
 						.mobile(StringUtils.isBlank(req.getMobileno())?"":req.getMobileno())
 						.customerType(req.getCustomerTyp())
-						.loginId(StringUtils.isBlank(req.getBrokerCode())?"":req.getBrokerCode())
-						.dob(sdf.parse(req.getDateOfBirth()))
+						.loginId(StringUtils.isBlank(req.getLoginId())?"":req.getLoginId())
 						.customerId(StringUtils.isBlank(req.getCustomerId())?personalInfoRepository.getCustomerId():Long.valueOf(req.getCustomerId()))
-						.agencyCode(agencyCode)
+						.agencyCode(StringUtils.isBlank(req.getBrokerCode())?"":req.getBrokerCode())
 						.build();
 				Long customerId =personalInfoRepository.save(personalInfo).getCustomerId();
 				
@@ -328,6 +313,7 @@ public class MadisonQuoteServiceImpl implements MadisonQuoteService{
 				hpm.setReferralDescription(referalRemarks);
 				hpm.setStatus("R");
 			}
+			log.info("getQuote Premium Response"+cs.reqPrint(comres));
 		}catch (Exception e) {
 			e.printStackTrace();
 			comres.setMessage("FAILED");
@@ -347,7 +333,7 @@ public class MadisonQuoteServiceImpl implements MadisonQuoteService{
 		String excess_premium="";
 		Double overallPremium =0D;
 		try {
-			String premium =hpmRepo.getPremium(hpm.getApplicationNo().toString());
+			String premium =StringUtils.isBlank(hpmRepo.getPremium(hpm.getApplicationNo().toString()))?"0":hpmRepo.getPremium(hpm.getApplicationNo().toString());
 			List<Map<String,Object>> excessList =hpmRepo.getExcessPremium(hpm.getApplicationNo().toString());
 			if(!CollectionUtils.isEmpty(excessList)) {
 				 Map<String,Object> excess =excessList.get(0);	
@@ -391,60 +377,66 @@ public class MadisonQuoteServiceImpl implements MadisonQuoteService{
 		SaveVehicleRes vehRes =new SaveVehicleRes();
 		log.info("Save vehicle request : "+cs.reqPrint(req));
 		try {
-			Long applicationNo =StringUtils.isBlank(req.getApplicationNo())?motorDataDetailRepository.getApplicatonNo():Long.valueOf(req.getApplicationNo());
-			PersonalInfo pi=personalInfoRepository.findById(Long.valueOf(req.getCustomerId())).get();
-			Long vehicleId=StringUtils.isBlank(req.getVehicleId())?motorDataDetailRepository.getVehicleId(applicationNo):Long.valueOf(req.getVehicleId());
-			List<Map<String,Object>> list=motorDataDetailRepository.getDeductibleList(req.getBranchCode(), req.getSeatingCapacity(), req.getVehicleUsage(), req.getBodyTypeId(),req.getExcessLimit());
-			String excessAmount ="";
-			
-			if(!CollectionUtils.isEmpty(list))
-				 excessAmount =list.get(0).get("DEDUCT_END")==null?"":list.get(0).get("DEDUCT_END").toString();
-		
-			List<String> makeArr=makeMasterRepository.getMakeNameById(req.getMakeId());
-			List<String> modelArr=makeMasterRepository.getModelNameById(req.getMakeId(),req.getModelId());
-			List<String> bodyArr=makeMasterRepository.getBodyNameById(req.getBodyTypeId());
-			List<String> vehUsageArr=makeMasterRepository.getVehicleUsage(req.getVehicleUsage());
-
-			MotorDataDetail motorDataDetail = MotorDataDetail.builder()
-					.applicationNo(Long.valueOf(applicationNo))
-					.vehicleId(vehicleId)
-					.productId(65L)
-					.amendId(0L)
-					.customerId(Long.valueOf(pi.getCustomerId()))
-					.makeId(Long.valueOf(req.getMakeId()))
-					.modelId(Long.valueOf(req.getModelId()))
-					.body(Long.valueOf(req.getBodyTypeId()))
-					.manufactureYear(req.getManufacureYear())
-					.seatingCapacity(Long.valueOf(req.getSeatingCapacity()))
-					.suminsuredValueLocal(Double.valueOf(req.getSumInsured()))
-					.vehicleType(Long.valueOf(req.getVehicleUsage()))
-					.agencyRepair("N")
-					.vehicleColor(StringUtils.isBlank(req.getVehicleColor())?null:Long.valueOf(req.getVehicleColor()))
-					.leased(StringUtils.isBlank(req.getLeasedYn())?"N":req.getLeasedYn())
-					.bankId(StringUtils.isBlank(req.getBankOfFinance())?null:Long.valueOf(req.getBankOfFinance()))
-					.registrationNo(req.getRegistrationNo())
-					.chassisNo(req.getChassisNo())
-					.engineNumber(StringUtils.isBlank(req.getEngineNo())?"":req.getEngineNo())
-					.noOfClaims(StringUtils.isBlank(req.getNoOfClaims())?null:Long.valueOf(req.getNoOfClaims()))
-					.cubicCapacity(StringUtils.isBlank(req.getEngineCapacity())?null:Long.valueOf(req.getEngineCapacity()))
-					.entryDate(new Date())
-					.status("Y")
-					.electricalSi(StringUtils.isBlank(req.getElectricalAccesAmt())?null:Long.valueOf(req.getElectricalAccesAmt()))
-					.nonelectricalSi(StringUtils.isBlank(req.getNonElectricalAccesAmt())?null:Long.valueOf(req.getNonElectricalAccesAmt()))
-					.customerType(pi.getCustomerType())
-					.deductibleId(Long.valueOf(req.getExcessLimit()))
-					.deductibleAmount(Long.valueOf(excessAmount))
-					.makeName(CollectionUtils.isEmpty(makeArr)?"":makeArr.get(0))
-					.modelName(CollectionUtils.isEmpty(modelArr)?"":modelArr.get(0))
-					.bodyName(CollectionUtils.isEmpty(bodyArr)?"":bodyArr.get(0))
-					.vehUsageName(CollectionUtils.isEmpty(vehUsageArr)?"":vehUsageArr.get(0))
-					.build();				
-			motorDataDetailRepository.save(motorDataDetail);
+			List<ErrorList> errorLists =validation.validateVehicle(req);
+			if(CollectionUtils.isEmpty(errorLists)) {
+				Long applicationNo =StringUtils.isBlank(req.getApplicationNo())?motorDataDetailRepository.getApplicatonNo():Long.valueOf(req.getApplicationNo());
+				PersonalInfo pi=personalInfoRepository.findById(Long.valueOf(req.getCustomerId())).get();
+				Long vehicleId=StringUtils.isBlank(req.getVehicleId())?motorDataDetailRepository.getVehicleId(applicationNo):Long.valueOf(req.getVehicleId());
+				List<Map<String,Object>> list=motorDataDetailRepository.getDeductibleList(req.getBranchCode(), req.getSeatingCapacity(), req.getVehicleUsage(), req.getBodyTypeId(),req.getExcessLimit());
+				String excessAmount ="";
 				
-			vehRes.setApplicationNo(applicationNo.toString());
-			vehRes.setVehicleId(vehicleId.toString());
-			res.setMessage("SUCCESS");
-			res.setResponse(vehRes);
+				if(!CollectionUtils.isEmpty(list))
+					 excessAmount =list.get(0).get("DEDUCT_END")==null?"":list.get(0).get("DEDUCT_END").toString();
+			
+				List<String> makeArr=makeMasterRepository.getMakeNameById(req.getMakeId());
+				List<String> modelArr=makeMasterRepository.getModelNameById(req.getMakeId(),req.getModelId());
+				List<String> bodyArr=makeMasterRepository.getBodyNameById(req.getBodyTypeId());
+				List<String> vehUsageArr=makeMasterRepository.getVehicleUsage(req.getVehicleUsage());
+	
+				MotorDataDetail motorDataDetail = MotorDataDetail.builder()
+						.applicationNo(Long.valueOf(applicationNo))
+						.vehicleId(vehicleId)
+						.productId(65L)
+						.amendId(0L)
+						.customerId(Long.valueOf(pi.getCustomerId()))
+						.makeId(Long.valueOf(req.getMakeId()))
+						.modelId(Long.valueOf(req.getModelId()))
+						.body(Long.valueOf(req.getBodyTypeId()))
+						.manufactureYear(req.getManufacureYear())
+						.seatingCapacity(Long.valueOf(req.getSeatingCapacity()))
+						.suminsuredValueLocal(Double.valueOf(req.getSumInsured()))
+						.vehicleType(Long.valueOf(req.getVehicleUsage()))
+						.agencyRepair("N")
+						.vehicleColor(StringUtils.isBlank(req.getVehicleColor())?null:Long.valueOf(req.getVehicleColor()))
+						.leased(StringUtils.isBlank(req.getLeasedYn())?"N":req.getLeasedYn())
+						.bankId(StringUtils.isBlank(req.getBankOfFinance())?null:Long.valueOf(req.getBankOfFinance()))
+						.registrationNo(req.getRegistrationNo())
+						.chassisNo(req.getChassisNo())
+						.engineNumber(StringUtils.isBlank(req.getEngineNo())?"":req.getEngineNo())
+						.noOfClaims(StringUtils.isBlank(req.getNoOfClaims())?null:Long.valueOf(req.getNoOfClaims()))
+						.cubicCapacity(StringUtils.isBlank(req.getEngineCapacity())?null:Long.valueOf(req.getEngineCapacity()))
+						.entryDate(new Date())
+						.status("Y")
+						.electricalSi(StringUtils.isBlank(req.getElectricalAccesAmt())?null:Long.valueOf(req.getElectricalAccesAmt()))
+						.nonelectricalSi(StringUtils.isBlank(req.getNonElectricalAccesAmt())?null:Long.valueOf(req.getNonElectricalAccesAmt()))
+						.customerType(pi.getCustomerType())
+						.deductibleId(Long.valueOf(req.getExcessLimit()))
+						.deductibleAmount(Long.valueOf(excessAmount))
+						.makeName(CollectionUtils.isEmpty(makeArr)?"":makeArr.get(0))
+						.modelName(CollectionUtils.isEmpty(modelArr)?"":modelArr.get(0))
+						.bodyName(CollectionUtils.isEmpty(bodyArr)?"":bodyArr.get(0))
+						.vehUsageName(CollectionUtils.isEmpty(vehUsageArr)?"":vehUsageArr.get(0))
+						.build();				
+				motorDataDetailRepository.save(motorDataDetail);
+					
+				vehRes.setApplicationNo(applicationNo.toString());
+				vehRes.setVehicleId(vehicleId.toString());
+				res.setMessage("SUCCESS");
+				res.setResponse(vehRes);
+			}else {
+				res.setMessage("ERROR");
+				res.setResponse(errorLists);
+			}
 		}catch (Exception e) {
 			e.printStackTrace();
 			res.setMessage("FAILED");
@@ -562,96 +554,112 @@ public class MadisonQuoteServiceImpl implements MadisonQuoteService{
 	public CommonResponse doBuypolicy(BuyPolicyRequest req) {
 		CommonResponse res = new CommonResponse();
 		log.info("buypolicy request : "+cs.reqPrint(req));
-		String encrPayUrl="";
+		PersonalInfo per =new PersonalInfo ();
 		try {
-			BuyPolicyCustomerReq cusReq =req.getCustomer();
-			
-			Long quoteNo =Long.valueOf(req.getQuoteNo());
-			HomePositionMaster hpm=hpmRepo.findByQuoteNo(quoteNo);
-			String installmentYn =StringUtils.isBlank(req.getInstallmentYn())?"":req.getInstallmentYn();
-			hpmRepo.updateMddPolicyDate(req.getPolicyStartDate(),req.getApplicationNo());
-			hpmRepo.updateMpdPolicyDate(req.getPolicyStartDate(),req.getApplicationNo());
-			hpmRepo.updateHpmPolicyDate(req.getPolicyStartDate(),hpm.getBranchCode(),installmentYn,req.getApplicationNo());
-			
-			if("N".equalsIgnoreCase(req.getReferalQuoteYn()))
-				hpmRepo.updateReferalRemarks(req.getApplicationNo());
-			
-			
-			Map<String,Object> map =personalInfoRepository.getAgencyCodeAndOaCode(hpm.getLoginId());
-			
-			PersonalInfo personalInfo =PersonalInfo.builder()
-					.title(cusReq.getTitle())
-					.firstName(cusReq.getFirstName())
-					.lastName(cusReq.getLastname())
-					.mobile(cusReq.getMobile())
-					.email(cusReq.getEmail())
-					.address1(cusReq.getAddress1())
-					.address2(StringUtils.isBlank(cusReq.getAddress2())?"":cusReq.getAddress2())
-					.pobox(StringUtils.isBlank(cusReq.getPoBox())?"":cusReq.getPoBox())
-					.emirate("")
-					.status("Y")
-					.effectiveDate(new Date())
-					.companyName("")
-					.agencyCode(map.get("AGENCY_CODE")==null?"":map.get("AGENCY_CODE").toString())
-					.oaCode(map.get("OA_CODE")==null?"":map.get("OA_CODE").toString())
-					.missippiCustomerCode("")
-					.clientCustomerId("")
-					.custArNo("")
-					.custName(cusReq.getFirstName()+cusReq.getLastname())
-					.nrc(cusReq.getNrc())
-					.companyRegNo(cusReq.getCompanyRegNo())
-					.passportNumber(StringUtils.isBlank(cusReq.getPassportNo())?"":cusReq.getPassportNo())
-					.dob(sdf.parse(cusReq.getDateOfBirth()))
-					.dobAr(null)
-					.alternateMobile(StringUtils.isBlank(cusReq.getAlternatMobileNo())?"":cusReq.getAlternatMobileNo())
-					.telephone("")
-					.customerType(cusReq.getCustomerTyp())
-					.custNameArabic("")
-					.gender(StringUtils.isBlank(cusReq.getGender())?"":cusReq.getGender())
-					.occupation(StringUtils.isBlank(cusReq.getOccupation())?"":cusReq.getOccupation())
-					.customerId(Long.valueOf(cusReq.getCustomerId()))
-					.build();
-			personalInfoRepository.save(personalInfo);
-			
-			
-			if("Y".equalsIgnoreCase(req.getEmailQuoteYn())){
-				docUploadService.sendReferalQuoteMail(req);
-			}else if("Y".equalsIgnoreCase(req.getReferalQuoteYn())){
-				hpmRepo.updateHpmReferalBroker(hpm.getLoginId(),req.getApplicationNo());
-			}else {
-				if("Y".equalsIgnoreCase(req.getGeneratePolicyYn())) {
-					String url=hpmRepo.getPaymentUrl();
-					try {
-						String paymentType="madisonPay"; 
-						String type="";
-						String stat =hpmRepo.checkIsB2C(hpm.getLoginId());
-						if("Y".equalsIgnoreCase(stat))
-							type="b2c";
-						else
-							type="b2b";
-						String encrData=new BCryptPasswordEncoder().encode("quoteNo="+req.getQuoteNo()+"~~paymentType="+paymentType+"~~productId="+hpm.getProductId()+"~~brokertype="+type+"~~logintype=b2b~~branchCode="+req.getBranchCode());
-						encrPayUrl=url+encrData;
+			List<ErrorList> errorList=validation.validateBuyPolicy(req);
+			if(CollectionUtils.isEmpty(errorList)) {
+				BuyPolicyCustomerReq cusReq =req.getCustomer();
+				Long quoteNo =Long.valueOf(req.getQuoteNo());
+				HomePositionMaster hpm=hpmRepo.findByQuoteNo(quoteNo);
+				String installmentYn =StringUtils.isBlank(req.getInstallmentYn())?"N":req.getInstallmentYn();
+				hpmRepo.updateMddPolicyDate(req.getPolicyStartDate(),req.getApplicationNo());
+				hpmRepo.updateMpdPolicyDate(req.getPolicyStartDate(),req.getApplicationNo());
+				hpmRepo.updateHpmPolicyDate(req.getPolicyStartDate(),hpm.getBranchCode(),installmentYn,req.getApplicationNo());
+				
+				if("N".equalsIgnoreCase(req.getReferalQuoteYn()))
+					hpmRepo.updateReferalRemarks(req.getApplicationNo());
+				
+				
+				Map<String,Object> map =personalInfoRepository.getAgencyCodeAndOaCode(hpm.getLoginId());
+				
+				PersonalInfo personalInfo =PersonalInfo.builder()
+						.amendId(new BigDecimal(0))
+						.title(cusReq.getTitle())
+						.firstName(cusReq.getFirstName())
+						.lastName(cusReq.getLastname())
+						.mobile(cusReq.getMobile())
+						.email(cusReq.getEmail())
+						.address1(cusReq.getAddress1())
+						.address2(StringUtils.isBlank(cusReq.getAddress2())?"":cusReq.getAddress2())
+						.pobox(StringUtils.isBlank(cusReq.getPoBox())?"":cusReq.getPoBox())
+						.emirate("")
+						.status("Y")
+						.effectiveDate(new Date())
+						.companyName("")
+						.agencyCode(map.get("AGENCY_CODE")==null?"":map.get("AGENCY_CODE").toString())
+						.oaCode(map.get("OA_CODE")==null?"":map.get("OA_CODE").toString())
+						.missippiCustomerCode("")
+						.clientCustomerId("")
+						.custArNo("")
+						.custName(cusReq.getFirstName()+cusReq.getLastname())
+						.nrc(cusReq.getNrc())
+						.companyRegNo(cusReq.getCompanyRegNo())
+						.passportNumber(StringUtils.isBlank(cusReq.getPassportNo())?"":cusReq.getPassportNo())
+						.dob(sdf.parse(cusReq.getDateOfBirth()))
+						.dobAr(null)
+						.alternateMobile(StringUtils.isBlank(cusReq.getAlternatMobileNo())?"":cusReq.getAlternatMobileNo())
+						.telephone("")
+						.customerType(cusReq.getCustomerTyp())
+						.custNameArabic("")
+						.gender(StringUtils.isBlank(cusReq.getGender())?"":cusReq.getGender())
+						.occupation(StringUtils.isBlank(cusReq.getOccupation())?"":cusReq.getOccupation())
+						.customerId(Long.valueOf(cusReq.getCustomerId()))
+						.build();
+				per=personalInfoRepository.save(personalInfo);
+				
+				
+				if("Y".equalsIgnoreCase(req.getEmailQuoteYn())){
+					docUploadService.sendReferalQuoteMail(req);
+					res.setMessage("MAIL");
+					res.setResponse("Mail sent successfully");
+				}else if("Y".equalsIgnoreCase(req.getReferalQuoteYn())){
+					hpmRepo.updateHpmReferalBroker(hpm.getLoginId(),req.getApplicationNo());
+					res.setMessage("REFERAL");
+					res.setResponse("Quote referal successfully to "+hpm.getLoginId()+"");
+				}else {
+					if("Y".equalsIgnoreCase(req.getGeneratePolicyYn())) {
+						/*String url=hpmRepo.getPaymentUrl();
+						try {
+							String paymentType="madisonPay"; 
+							String type="";
+							String stat =hpmRepo.checkIsB2C(hpm.getLoginId());
+							if("Y".equalsIgnoreCase(stat))
+								type="b2c";
+							else
+								type="b2b";
+							String encrData=new BCryptPasswordEncoder().encode("quoteNo="+req.getQuoteNo()+"~~paymentType="+paymentType+"~~productId="+hpm.getProductId()+"~~brokertype="+type+"~~logintype=b2b~~branchCode="+req.getBranchCode());
+							encrPayUrl=url+encrData;
+							
+							log.info("Payment encode url :"+encrPayUrl);*/
+						String firstName =StringUtils.isBlank(per.getFirstName())?"":per.getFirstName();
+						String lastName =StringUtils.isBlank(per.getLastName())?"":per.getLastName();
+						String email =StringUtils.isBlank(per.getEmail())?"":per.getEmail();
+						String mobileNo =StringUtils.isBlank(per.getMobile())?"":per.getMobile();
 						
-						log.info("Payment encode url :"+encrPayUrl);
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-					
-				} 
+						BuyPolicyResponse buyPolicyResponse =BuyPolicyResponse.builder()
+								.quoteNo(quoteNo.toString())
+								.customerName(firstName+lastName)
+								.mobileNo(mobileNo)
+								.email(email)
+								.product("MOTOR INSURANCE")
+								.Premium(hpm.getOverallPremium().toString())
+								.branchCode(hpm.getBranchCode())
+								.build();
+						res.setMessage("SUCCESS");
+						res.setResponse(buyPolicyResponse);
+						} 
+						
+					} 
+			}else {
+				res.setMessage("ERROR");
+				res.setErrors(errorList);
 			}
-			
-			BuyPolicyResponse buyPolicyResponse =BuyPolicyResponse.builder()
-					.applicationNo(hpm.getApplicationNo().toString())
-					.quoteNo(quoteNo.toString())
-					.productId(hpm.getQuoteNo().toString())
-					.redirectUrl(encrPayUrl)
-					.build();
-			res.setResponse(buyPolicyResponse);
-			
 			
 		}catch (Exception e) {
 			log.error(e);
 			e.printStackTrace();
+			res.setMessage("FAILED");
+			res.setResponse(null);
 		}
 		return res;
 	}
@@ -662,20 +670,26 @@ public class MadisonQuoteServiceImpl implements MadisonQuoteService{
 		CommonResponse res =new  CommonResponse();
 		log.info("driver request :"+cs.reqPrint(req));
 		try {
-			MotorDataDetail mdd =motorDataDetailRepository.findByApplicationNoAndVehicleId(Long.valueOf(req.getApplicationNo()), Long.valueOf(req.getVehicleId()));
-			mdd.setDriverId(req.getDriverId());
-			mdd.setDriverDob(sdf.parse(req.getDriverDob()));
-			mdd.setPrevPolicyexpirydate(StringUtils.isBlank(req.getPrePolicyExpDate())?null:sdf.parse(req.getPrePolicyExpDate()));
-			mdd.setClaimyn(StringUtils.isBlank(req.getClaimyn())?"N":req.getClaimyn());
-			mdd.setPrevPolicyno(StringUtils.isBlank(req.getPolicyNo())?"":req.getPolicyNo());
-			mdd.setInsCompany(StringUtils.isBlank(req.getInsCompany())?"":req.getInsCompany());
-			mdd.setNoClaimBonus(StringUtils.isBlank(req.getNoOfClaimBonus())?null:Long.valueOf(req.getNoOfClaimBonus()));
-			mdd.setClaimAmount(StringUtils.isBlank(req.getClaimAmt())?null:Long.valueOf(req.getClaimAmt()));
-			mdd.setIsclaimdtl(StringUtils.isBlank(req.getIsClaimDtl())?"N":req.getIsClaimDtl());
-			mdd.setOwnnerdriverYn(StringUtils.isBlank(req.getOwnnerdriverYn())?"N":req.getOwnnerdriverYn());
-			motorDataDetailRepository.save(mdd);
-			res.setMessage("SUCCESS");
-			res.setResponse("Driver inserted successfully");
+			List<ErrorList> errorlist =validation.validateDriver(req);
+			if(CollectionUtils.isEmpty(errorlist)) {
+				MotorDataDetail mdd =motorDataDetailRepository.findByApplicationNoAndVehicleId(Long.valueOf(req.getApplicationNo()), Long.valueOf(req.getVehicleId()));
+				mdd.setDriverId(req.getDriverId());
+				mdd.setDriverDob(sdf.parse(req.getDriverDob()));
+				mdd.setPrevPolicyexpirydate(StringUtils.isBlank(req.getPrePolicyExpDate())?null:sdf.parse(req.getPrePolicyExpDate()));
+				mdd.setClaimyn(StringUtils.isBlank(req.getClaimyn())?"N":req.getClaimyn());
+				mdd.setPrevPolicyno(StringUtils.isBlank(req.getPolicyNo())?"":req.getPolicyNo());
+				mdd.setInsCompany(StringUtils.isBlank(req.getInsCompany())?"":req.getInsCompany());
+				mdd.setNoClaimBonus(StringUtils.isBlank(req.getNoOfClaimBonus())?null:Long.valueOf(req.getNoOfClaimBonus()));
+				mdd.setClaimAmount(StringUtils.isBlank(req.getClaimAmt())?null:Long.valueOf(req.getClaimAmt()));
+				mdd.setIsclaimdtl(StringUtils.isBlank(req.getIsClaimDtl())?"N":req.getIsClaimDtl());
+				mdd.setOwnnerdriverYn(StringUtils.isBlank(req.getOwnnerdriverYn())?"N":req.getOwnnerdriverYn());
+				motorDataDetailRepository.save(mdd);
+				res.setMessage("SUCCESS");
+				res.setResponse("Driver inserted successfully");
+			}else {
+				res.setMessage("ERROR");
+				res.setResponse(errorlist);
+			}
 		}catch (Exception e) {
 			log.error(e);
 			e.printStackTrace();

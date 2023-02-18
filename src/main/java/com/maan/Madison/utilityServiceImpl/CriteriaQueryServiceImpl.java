@@ -41,7 +41,7 @@ public class CriteriaQueryServiceImpl {
 			Root<DocumentMaster> dm =query.from(DocumentMaster.class);
 			
 			Predicate p1 =cb.equal(mdd.get("quoteNo"), dud.get("quoteNo"));
-			Predicate p2 =cb.equal(mdd.get("vehicleId"), mdd.get("vtypeId"));
+			Predicate p2 =cb.equal(mdd.get("vehicleId"), dud.get("vtypeId"));
 			Predicate p3 =cb.equal(dm.get("documentId"), dud.get("documentId"));
 			Predicate p4 =cb.equal(dud.get("quoteNo"), req.getQuoteNo());
 			Predicate p5 =cb.equal(dud.get("vtypeId"),req.getVtypeId());
@@ -49,7 +49,7 @@ public class CriteriaQueryServiceImpl {
 			Predicate p7 =cb.notEqual(dm.get("userType"), "surveyor");
 			
 			query.multiselect(mdd.get("engineNumber").alias("engineNumber"),mdd.get("registrationNo").alias("registrationNo"),
-					mdd.get("chassisNo").alias("chassisNo"),dud.get("documentId").alias("documentId"),dud.get("documentDesc").alias("documentDesc")
+					mdd.get("chassisNo").alias("chassisNo"),dud.get("documentId").alias("documentId")
 					,dm.get("documentDesc").alias("documentDesc"),dud.get("filePathName").alias("filePathName"),dud.get("fileName").alias("fileName"),
 					dud.get("description").alias("description")
 					);

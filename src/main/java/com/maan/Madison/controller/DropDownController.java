@@ -107,5 +107,15 @@ public class DropDownController {
 		return service.getBrokerBranchList(loginId);
 	}
 	
+	@GetMapping("/get/paymenttypes")
+	public CommonResponse getPaymentType() {
+		return service.getPaymentType();
+	}
+	
+	@GetMapping("/get/paymentbank")
+	public CommonResponse getPaymentBank() {
+		return service.getPaymentBank();
+	}
+	
 	
 }

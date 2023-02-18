@@ -1,10 +1,11 @@
 package com.maan.Madison.serviceImpl;
 
-import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -18,7 +19,6 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import javax.persistence.Tuple;
 
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,10 +26,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-import org.springframework.web.multipart.MultipartFile;
 
 import com.maan.Madison.controller.DocumentUploadController;
-import com.maan.Madison.entity.DocumentMasterId;
 import com.maan.Madison.entity.DocumentUploadDetails;
 import com.maan.Madison.entity.DocumentUploadDetailsId;
 import com.maan.Madison.entity.MailMaster;
@@ -64,37 +62,44 @@ public class DocumentUploadServiceImpl implements DocumentUploadService{
 	private MailMasterRepository mailMasterRepo;
 	@Autowired
 	private MotorDataDetailRepository motorDataDetailRepository;
-	
+	@Autowired
+	private CommonService cs;
 	@Override
-	public CommonResponse documentUpload(MultipartFile file, DocumentUploadReq req) {
+	public CommonResponse documentUpload(List<DocumentUploadReq> list) {
 		CommonResponse res = new CommonResponse();
+		log.info("documentUpload request :"+list.size());
 		try {
-			String file_name =FilenameUtils.getBaseName(file.getOriginalFilename());
-			String file_extenion =FilenameUtils.getExtension(file.getOriginalFilename());
-			
-			Random random = new Random(10000);
-			String file_path =fileUploadPath+file_name+"_"+random.nextLong()+"."+file_extenion;
-			
-			log.info("documentUpload file path :"+file_path);
-			
-			Path path = Paths.get(file_path);
-	        Files.write(path, file.getBytes());
-			
-	        DocumentUploadDetails uploadDetails = DocumentUploadDetails.builder()
-	        		.documentId(Long.valueOf(req.getDocumentTypeId()))
-	        		.description(StringUtils.isBlank(req.getDescription())?"":req.getDescription())
-	        		.fileName(file_name)
-	        		.filePathName(file_path)
-	        		.productId(Long.valueOf(req.getProductId()))
-	        		.quoteNo(Long.valueOf(req.getQuoteNo()))
-	        		.status("Y")
-	        		.vtypeId(Long.valueOf(req.getVtypeId()))
-	        		.uploadTime(new Date())
-	        		.build();
-	        documentUploadRepo.save(uploadDetails);
+			for (DocumentUploadReq req :list) {
+				
+				String[] spilt =req.getFileName().split("[.]");
+				String file_extenion =spilt[1];
+				String file_name=spilt[0];
+				
+				String file_path =fileUploadPath+file_name+"_"+new Date().getSeconds()+"."+file_extenion;
+				
+				byte[] decodedImg = Base64.getDecoder().decode(req.getBase64File().getBytes(StandardCharsets.UTF_8));
+	                    
+				Path destinationFile = Paths.get(file_path);
+				Files.write(destinationFile, decodedImg);
+				
+		        DocumentUploadDetails uploadDetails = DocumentUploadDetails.builder()
+		        		.documentId(Long.valueOf(req.getDocumentTypeId()))
+		        		.description(StringUtils.isBlank(req.getDescription())?"":req.getDescription())
+		        		.fileName(req.getFileName())
+		        		.filePathName(file_path)
+		        		.productId(Long.valueOf(req.getProductId()))
+		        		.quoteNo(Long.valueOf(req.getQuoteNo()))
+		        		.status("Y")
+		        		.vtypeId(Long.valueOf(req.getVtypeId()))
+		        		.uploadTime(new Date())
+		        		.build();
+		        documentUploadRepo.save(uploadDetails);
+			}
 	        res.setMessage("SUCCESS");
 	        res.setResponse("document upload successfully..!");
 		}catch (Exception e) {
+			res.setMessage("FAILED");
+	        res.setResponse("document upload failed..!");
 			e.printStackTrace();
 			log.error(e);
 		}
@@ -111,11 +116,11 @@ public class DocumentUploadServiceImpl implements DocumentUploadService{
 				list.forEach( p->{
 					DocumentUploadGetRes uploadGetRes =DocumentUploadGetRes.builder()
 							.chassisNo(p.get("chassisNo")==null?"":p.get("chassisNo").toString())
-							.description(p.get("description")==null?"":p.get("description").toString())
+							.description(p.get("documentDesc")==null?"":p.get("documentDesc").toString())
 							.documentTypeId(p.get("documentId")==null?"":p.get("documentId").toString())
 							.engineNo(p.get("engineNumber")==null?"":p.get("engineNumber").toString())
 							.fileName(p.get("fileName")==null?"":p.get("fileName").toString())
-							.filePath(p.get("filePathName")==null?"":p.get("filePathName").toString())
+							.filePath(p.get("filePathName")==null?"":p.get("filePathName").toString().replace("\\", "//"))
 							.registrationNo(p.get("registrationNo")==null?"":p.get("registrationNo").toString())
 							.build();
 					response.add(uploadGetRes);

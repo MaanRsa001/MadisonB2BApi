@@ -33,4 +33,6 @@ public interface DocumentMasterRepository  extends JpaRepository<DocumentMaster,
 
 	List<DocumentMaster> findByProductIdAndStatusIgnoreCase(String productId,String status);
 
+	List<DocumentMaster> findByProductIdAndUserTypeIgnoreCaseAndStatusIgnoreCase(String productId,String userType, String status);
+
 }

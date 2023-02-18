@@ -39,4 +39,8 @@ public interface DropDownService {
 
 	CommonResponse getBrokerBranchList(String loginId);
 
+	CommonResponse getPaymentType();
+
+	CommonResponse getPaymentBank();
+
 }

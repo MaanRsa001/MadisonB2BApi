@@ -2,13 +2,13 @@ package com.maan.Madison.serviceImpl;
 
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
 
-import javax.annotation.PostConstruct;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import javax.xml.bind.DatatypeConverter;
@@ -31,6 +31,7 @@ import com.maan.Madison.repository.PaymentRepository;
 import com.maan.Madison.request.AirtelPayTokenRequest;
 import com.maan.Madison.request.AirtelPaymentRequest;
 import com.maan.Madison.request.MadionPaymentRequest;
+import com.maan.Madison.request.MotorIntegrationRequest;
 import com.maan.Madison.request.PayeeRequest;
 import com.maan.Madison.request.PaymentRequest;
 import com.maan.Madison.request.SubscriberReq;
@@ -38,20 +39,29 @@ import com.maan.Madison.request.TransactionReq;
 import com.maan.Madison.response.AirtelPaymentResponse;
 import com.maan.Madison.response.CardPaymentRespone;
 import com.maan.Madison.response.CommonResponse;
+import com.maan.Madison.service.MotorIntegrationService;
 import com.maan.Madison.service.PaymentService;
+import com.maan.Madison.utilityServiceImpl.ErrorList;
+import com.maan.Madison.utilityServiceImpl.MadisonInputValidation;
 
 @Service
 public class PaymentServiceImpl implements PaymentService {
 	
 	Logger log =LogManager.getLogger(getClass());
 	private static final String HMAC_SHA256 = "HmacSHA256";
-
 	
 	@Autowired
 	private PaymentRepository paymentRepo;
 	@Autowired
 	private CommonService commondao;
+	@Autowired
+	private MotorIntegrationService integration;
+	@Autowired
+	private MadisonInputValidation validation;
+	
 	ObjectMapper mapper = new ObjectMapper();
+	
+	
 	@Override
 	public CommonResponse doMtnPayment(MadionPaymentRequest req) {
 		log.info("doMtnPayment request"+commondao.reqPrint(req));
@@ -114,6 +124,7 @@ public class PaymentServiceImpl implements PaymentService {
 					}
 					
 				}
+			res.setMessage(paymentStatus);
 			res.setResponse(StringUtils.isBlank(paymentStatus)?"Server busy please try again later!":paymentStatus);
 		}catch (Exception e) {
 			log.error(e);
@@ -130,19 +141,18 @@ public class PaymentServiceImpl implements PaymentService {
 		String cheque_or_cashDate="";
 		String micr_code="";
 		String noOfTerms="";
-		String paymentPremiumDate=""; String installmentNo="";String description=""; String totalPremium="";
+		String paymentPremiumDate=""; String installmentNo="";String description=""; String Insat_totalPremium="";
 		try {
 			
 			Map<String,Object> map=paymentRepo.getPaymentInsertDetails(req.getQuoteNo(),req.getProductId(),req.getBranchCode());
-			String paymentMode=map.get("PAYMENT_MODE")==null?"":map.get("PAYMENT_MODE").toString();
-			String productId=map.get("PRODUCT_NAME")==null?"":map.get("PRODUCT_NAME").toString();
+			String paymentMode=req.getPaymentType();
 			merchant_reference=paymentRepo.getMerchantRefNo();
 			log.info("Insert Payment || Start ||MerchantRefNo : "+merchant_reference);
 			if("1".equals(paymentMode)) {
-				cheque_cash_no =req.getCashChellanNo();
-				bankname=req.getCashDepositBank();
-				amount=req.getCashAmount();
-				cheque_or_cashDate=req.getCashInstrumentDate();
+				//cheque_cash_no =StringUtils.isBlank(req.getCashChellanNo())?"":req.getCashChellanNo();
+				//bankname=StringUtils.isBlank(req.getCashDepositBank())?"":req.getCashDepositBank();
+				//amount=StringUtils.isBlank(req.getCashAmount())?"":req.getCashAmount();
+				//cheque_or_cashDate=StringUtils.isBlank(req.getCashInstrumentDate())?"":req.getCashInstrumentDate();
 				
 			}else if("2".equals(paymentMode)) {
 				cheque_cash_no=req.getChequeNo();
@@ -155,7 +165,7 @@ public class PaymentServiceImpl implements PaymentService {
 			if(req.getInstallmentYN().equals("Y")) {
 				List<Map<String,Object>> installmentDetailsList =paymentRepo.getInstallmentDet(req.getQuoteNo());
 				if(!CollectionUtils.isEmpty(installmentDetailsList)) {
-					totalPremium = installmentDetailsList.get(0).get("PREMIUM_AMOUNT")==null?"":installmentDetailsList.get(0).get("PREMIUM_AMOUNT").toString();
+					Insat_totalPremium = installmentDetailsList.get(0).get("PREMIUM_AMOUNT")==null?"":installmentDetailsList.get(0).get("PREMIUM_AMOUNT").toString();
 					noOfTerms = installmentDetailsList.get(0).get("NO_OF_TERMS")==null?"":installmentDetailsList.get(0).get("NO_OF_TERMS").toString();
 					paymentPremiumDate = installmentDetailsList.get(0).get("PAYMENT_PREMIUM_DATE")==null?"":installmentDetailsList.get(0).get("PAYMENT_PREMIUM_DATE").toString();
 					installmentNo = installmentDetailsList.get(0).get("INSTALLMENT_NO")==null?"":installmentDetailsList.get(0).get("INSTALLMENT_NO").toString();
@@ -163,22 +173,22 @@ public class PaymentServiceImpl implements PaymentService {
 					
 				}
 			}else {
-				totalPremium="1";
+				Insat_totalPremium="1";
 			}
 			
 			String airtel_mtn_mobileNo="";String universalId="";
 			if("101".equalsIgnoreCase(paymentMode)) {
 				universalId = getUniversalId();
-				airtel_mtn_mobileNo = req.getMtnMobileNo();
+				airtel_mtn_mobileNo = req.getMobileNo();
 			}else if("102".equalsIgnoreCase(paymentMode)) {
 				universalId = merchant_reference;
-				airtel_mtn_mobileNo = req.getMtnMobileNo();
+				airtel_mtn_mobileNo = req.getMobileNo();
 			}
 			
 			Payment_Detail payment =Payment_Detail.builder()
 					.application_no(map.get("APPLICATION_NO")==null?"":map.get("APPLICATION_NO").toString())
 					.quote_no(map.get("QUOTE_NO")==null?null:Long.valueOf(map.get("QUOTE_NO").toString()))
-					.product_id(Long.valueOf(productId))
+					.product_id(Long.valueOf(req.getProductId()))
 					.payment_type(paymentMode)
 					.merchant_reference(merchant_reference)
 					.customer_email(map.get("EMAIL")==null?"":map.get("EMAIL").toString())
@@ -188,13 +198,13 @@ public class PaymentServiceImpl implements PaymentService {
 					.installment_yn(StringUtils.isBlank(req.getInstallmentYN())?"":req.getInstallmentYN())
 					.premium(map.get("OVERALL_PREMIUM")==null?null:Double.valueOf(map.get("OVERALL_PREMIUM").toString()))
 					.no_of_installment(StringUtils.isBlank(noOfTerms)?null:Long.valueOf(noOfTerms))
-					.installment_amount(Double.valueOf(totalPremium))
-					.installment_frequency("monthly")
+					.installment_amount(Double.valueOf(Insat_totalPremium))
+					//.installment_frequency("monthly")
 					.installment_start_date(paymentPremiumDate)
-					.installment_no(Long.valueOf(installmentNo))
+					//.installment_no(Long.valueOf(installmentNo))
 					.installment_remarks(description)
 					.mobile_no(map.get("MOBILE")==null?"":map.get("MOBILE").toString())
-					.device_type("Mobile")
+					//.device_type("Mobile")
 					.cheque_no(cheque_cash_no)
 					.bank_name(bankname)
 					.micr_code(micr_code)
@@ -203,21 +213,22 @@ public class PaymentServiceImpl implements PaymentService {
 					.request_time(new Date())
 					.reference_no(universalId)
 					.mtnMobileNo(airtel_mtn_mobileNo)
+					
 					.build();
 			
 			Payment_Detail payment_Detail =paymentRepo.save(payment);
 			log.info("Insert Payment || End ||MerchantRefNo : "+payment_Detail.getMerchant_reference());
-			Map<String,Object> personal =paymentRepo.getPersonalDetailsByQuoteNo(req.getQuoteNo());
-			
-			payment_Detail.setBill_to_forename(personal.get("FIRST_NAME")==null?"":String.valueOf(personal.get("FIRST_NAME")).substring(1,60));
-			payment_Detail.setBill_to_surname(personal.get("LAST_NAME")==null?"":String.valueOf(personal.get("LAST_NAME")).substring(1,60));
-			payment_Detail.setBill_to_address_line1(personal.get("ADDRESS1")==null?"":String.valueOf(personal.get("ADDRESS1")).substring(1,60));
-			String emirate =personal.get("EMIRATE")==null?"":String.valueOf(personal.get("EMIRATE")).substring(1,60);
-			String city =personal.get("CITY")==null?"":String.valueOf(personal.get("CITY")).substring(1,60);
-			payment_Detail.setBill_to_address_city(StringUtils.isBlank(emirate)?city.substring(1,50):emirate.substring(1,50));
+			List<Map<String,Object>> list =paymentRepo.getPersonalDetailsByQuoteNo(req.getQuoteNo());
+			Map<String,Object> personal=list.get(0);
+			payment_Detail.setBill_to_forename(personal.get("FIRST_NAME")==null?"":String.valueOf(personal.get("FIRST_NAME")));
+			payment_Detail.setBill_to_surname(personal.get("LAST_NAME")==null?"":String.valueOf(personal.get("LAST_NAME")));
+			payment_Detail.setBill_to_address_line1(personal.get("ADDRESS1")==null?"":String.valueOf(personal.get("ADDRESS1")));
+			String emirate =personal.get("EMIRATE")==null?"":String.valueOf(personal.get("EMIRATE"));
+			String city =personal.get("CITY")==null?"":String.valueOf(personal.get("CITY"));
+			payment_Detail.setBill_to_address_city(StringUtils.isBlank(emirate)?city:emirate);
 			payment_Detail.setBill_to_address_country("ZM");
-			payment_Detail.setBill_to_address_postal_code(personal.get("POBOX")==null?"":String.valueOf(personal.get("POBOX")).substring(1,10));
-			payment_Detail.setBill_to_email(personal.get("EMAIL")==null?"":String.valueOf(personal.get("EMAIL")).substring(1,255));
+			payment_Detail.setBill_to_address_postal_code(personal.get("POBOX")==null?"":String.valueOf(personal.get("POBOX")));
+			payment_Detail.setBill_to_email(personal.get("EMAIL")==null?"":String.valueOf(personal.get("EMAIL")));
 			paymentRepo.saveAndFlush(payment_Detail);
 			
 		}catch (Exception e) {
@@ -339,8 +350,8 @@ public class PaymentServiceImpl implements PaymentService {
 						
 					}
 			}
-			res.setResponse(StringUtils.isBlank(paymentStatus)?"Server busy please try again later!":paymentStatus);
-		}catch (Exception e) {
+			res.setMessage(paymentStatus);
+			res.setResponse(StringUtils.isBlank(paymentStatus)?"Server busy please try again later!":paymentStatus);		}catch (Exception e) {
 			log.error(e);
 			e.printStackTrace();
 		}
@@ -642,6 +653,59 @@ public class PaymentServiceImpl implements PaymentService {
 			e.printStackTrace();
 		}
 		return token;
+	}
+
+	@Override
+	public CommonResponse cashPayment(MadionPaymentRequest req) {
+		CommonResponse res = new CommonResponse();
+		List<ErrorList> list =new ArrayList<ErrorList>();
+		try {
+			String merchantRefNo=insertPaymentDetails(req);
+			if(StringUtils.isNotBlank(merchantRefNo)) {
+				paymentRepo.updateRequestPayStatus("S", merchantRefNo, req.getQuoteNo());	
+				MotorIntegrationRequest integrationRequest =new MotorIntegrationRequest();
+				integrationRequest.setBranchCode(req.getBranchCode());
+				integrationRequest.setProductId(req.getProductId());
+				integrationRequest.setQuoteNo(req.getQuoteNo());
+				res =integration.integration(integrationRequest);
+			}else {
+				res.setMessage("FAILED");
+				list.add(new ErrorList("101","CashPayment","Something went wrong in payment .Contact Admin...!"));
+				res.setErrors(list);
+			}
+		}catch (Exception e) {
+			e.printStackTrace();
+		}
+		return res;
+	}
+
+	@Override
+	public CommonResponse chequePayment(MadionPaymentRequest req) {
+		CommonResponse res = new CommonResponse();
+		try {
+			List<ErrorList> list=validation.vaildatePaymenttDetail(req);
+			if(CollectionUtils.isEmpty(list)) {
+				String merchantRefNo=insertPaymentDetails(req);
+				if(StringUtils.isNotBlank(merchantRefNo)) {
+					paymentRepo.updateRequestPayStatus("S", merchantRefNo, req.getQuoteNo());
+					MotorIntegrationRequest integrationRequest =new MotorIntegrationRequest();
+					integrationRequest.setBranchCode(req.getBranchCode());
+					integrationRequest.setProductId(req.getProductId());
+					integrationRequest.setQuoteNo(req.getQuoteNo());
+					res =integration.integration(integrationRequest);
+				}else {
+					res.setMessage("ERROR");
+					list.add(new ErrorList("101","ChequePayment","Something went wrong in payment .Contact Admin...!"));
+					res.setErrors(list);
+				}
+			}else {
+				res.setErrors(list);
+				res.setMessage("ERROR");
+			}
+		}catch (Exception e) {
+			e.printStackTrace();
+		}
+		return res;
 	}
 	
 	

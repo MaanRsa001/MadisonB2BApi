@@ -1,6 +1,6 @@
 package com.maan.Madison.service;
 
-import org.springframework.web.multipart.MultipartFile;
+import java.util.List;
 
 import com.maan.Madison.request.BuyPolicyRequest;
 import com.maan.Madison.request.DocumentDeleteReq;
@@ -10,7 +10,7 @@ import com.maan.Madison.response.CommonResponse;
 
 public interface DocumentUploadService {
 
-	CommonResponse documentUpload(MultipartFile file, DocumentUploadReq req);
+	CommonResponse documentUpload(List<DocumentUploadReq> req);
 
 	CommonResponse getDocumentDetails(DocumentUploadGetReq req);
 

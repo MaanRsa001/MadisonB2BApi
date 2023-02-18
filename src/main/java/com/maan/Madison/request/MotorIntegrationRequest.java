@@ -13,5 +13,6 @@ public class MotorIntegrationRequest {
 	private String quoteNo;
 	@JsonProperty("BranchCode")
 	private String branchCode;
-
+	@JsonProperty("ProductId")
+	private String productId;
 }

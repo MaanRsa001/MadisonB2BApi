@@ -231,39 +231,97 @@ public class ParallelThreadExecutionImpl {
 	@Async
 	public CompletableFuture<PremiumInfoRes> getPremiumInfoRes(Long applicationNo) {
 		PremiumInfoRes response =new PremiumInfoRes();
+		Double basePremium=0D;
+		Double electricalAccess=0D;
+		Double nonElectricalAccess =0D;
+		Double deductables =0D;
+		Double minimumPreAdjust =0D;
+		Double baspremiumRate=0D;
+		Double deductableRate =0D;
 		try {
 			List<MotorPolicyCoverData> list=motorPolicyCoverDataRepository.findByApplicationNoOrderByDisplayOrderAsc(applicationNo);
-			
-			Double basePremium =list.stream()
-					.filter(i ->i.getGroupId().toString().equals("0"))
-					.collect(Collectors.summingDouble(I ->StringUtils.isBlank(I.getPremium().toString())?0D:I.getPremium()));
-			
-			Double electricalAccess =list.stream()
-					.filter(i ->i.getGroupId().toString().equals("101"))
-					.collect(Collectors.summingDouble(I ->StringUtils.isBlank(I.getPremium().toString())?0D:I.getPremium()));
-			
-			Double nonElectricalAccess =list.stream()
-					.filter(i ->i.getGroupId().toString().equals("102"))
-					.collect(Collectors.summingDouble(I ->StringUtils.isBlank(I.getPremium().toString())?0D:I.getPremium()));
-			
-			Double deductables =list.stream()
-					.filter(i ->i.getGroupId().toString().equals("104"))
-					.collect(Collectors.summingDouble(I ->StringUtils.isBlank(I.getPremium().toString())?0D:I.getPremium()));
-			
 			HomePositionMaster hpm=homePositionMasterRepository.findByApplicationNo(applicationNo);
+
+			if("ZMW".equalsIgnoreCase(hpm.getCurrency())) {
+				basePremium =list.stream()
+						.filter(i ->i.getGroupId().toString().equals("0"))
+						.collect(Collectors.summingDouble(I ->I.getPremium()==null?0D:I.getPremium()));
+				
+				baspremiumRate =list.stream()
+						.filter(i ->i.getGroupId().toString().equals("0"))
+						.collect(Collectors.summingDouble(I ->I.getRate().toString()==null?0D:I.getRate()));
+				
+				electricalAccess =list.stream()
+						.filter(i ->i.getGroupId().toString().equals("101"))
+						.collect(Collectors.summingDouble(I ->I.getPremium()==null?0D:I.getPremium()));
+				
+				 nonElectricalAccess =list.stream()
+						.filter(i ->i.getGroupId().toString().equals("102"))
+						.collect(Collectors.summingDouble(I ->I.getPremium()==null?0D:I.getPremium()));
+				
+				 deductables =list.stream()
+						.filter(i ->i.getGroupId().toString().equals("104"))
+						.collect(Collectors.summingDouble(I ->I.getPremium()==null?0D:I.getPremium()));
+				
+				 deductableRate =list.stream()
+							.filter(i ->i.getGroupId().toString().equals("104"))
+							.collect(Collectors.summingDouble(I ->I.getRate()==null?0D:I.getRate()));
+					
+				 minimumPreAdjust =list.stream()
+						.filter(i ->i.getGroupId().toString().equals("106"))
+						.collect(Collectors.summingDouble(I ->I.getPremium()==null?0D:I.getPremium()));
+				
+				
 			
-			Double before_tax_premium =basePremium+electricalAccess+nonElectricalAccess-deductables;
+			}else if ("USD".equalsIgnoreCase(hpm.getCurrency())) {
+				
+				basePremium =list.stream()
+						.filter(i ->i.getGroupId().toString().equals("0"))
+						.collect(Collectors.summingDouble(I ->I.getUsdPremium()==null?0D:I.getUsdPremium()));
 			
-			String overallPremium =StringUtils.isBlank(hpm.getOverallPremium().toString())?"":hpm.getOverallPremium().toString();
+				
+				electricalAccess =list.stream()
+						.filter(i ->i.getGroupId().toString().equals("101"))
+						.collect(Collectors.summingDouble(I ->I.getUsdPremium()==null?0D:I.getUsdPremium()));
+				
+				 nonElectricalAccess =list.stream()
+						.filter(i ->i.getGroupId().toString().equals("102"))
+						.collect(Collectors.summingDouble(I ->I.getUsdPremium()==null?0D:I.getUsdPremium()));
+				
+				 deductables =list.stream()
+						.filter(i ->i.getGroupId().toString().equals("104"))
+						.collect(Collectors.summingDouble(I ->I.getUsdPremium()==null?0D:I.getUsdPremium()));
+				
+				 minimumPreAdjust =list.stream()
+						.filter(i ->i.getGroupId().toString().equals("106"))
+						.collect(Collectors.summingDouble(I ->I.getUsdPremium()==null?0D:I.getUsdPremium()));
+				
+				 baspremiumRate =list.stream()
+							.filter(i ->i.getGroupId().toString().equals("0"))
+							.collect(Collectors.summingDouble(I ->I.getUsdRate()==null?0D:I.getUsdRate()));
+				
+				 deductableRate =list.stream()
+							.filter(i ->i.getGroupId().toString().equals("104"))
+							.collect(Collectors.summingDouble(I ->I.getUsdRate()==null?0D:I.getUsdRate()));
 			
-			String PolicyFees =StringUtils.isBlank(hpm.getPolicyFee().toString())?"":hpm.getPolicyFee().toString();
+			}
+			
+		
+			Double before_tax_premium =(basePremium+electricalAccess+nonElectricalAccess)+deductables;
+			
+			String overallPremium =hpm.getOverallPremium()==null?"":hpm.getOverallPremium().toString();
+			
+			String PolicyFees =hpm.getPolicyFee()==null?"":hpm.getPolicyFee().toString();
 			
 			response.setBasePremium(basePremium.toString());
+			response.setBasePremiumRate(baspremiumRate.toString());
+			response.setDeductiblesRate(deductableRate.toString());
 			response.setNonElectricalAccesPremium(nonElectricalAccess.toString());
 			response.setElectricalAccesPremium(electricalAccess.toString());
 			response.setPolicyFees(PolicyFees);
 			response.setPremiumBeforTax(before_tax_premium.toString());
 			response.setDeductibles(deductables.toString());
+			response.setMinimumPremiumAdjust(minimumPreAdjust.toString());
 			response.setOverAllPremium(overallPremium);
 		}catch (Exception e) {
 			e.printStackTrace();

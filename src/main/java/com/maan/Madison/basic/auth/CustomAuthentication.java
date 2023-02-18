@@ -29,6 +29,7 @@ public class CustomAuthentication extends WebSecurityConfigurerAdapter {
 	protected void configure(HttpSecurity http) throws Exception {
 
 		http.cors().and().csrf().disable();
+		http.authorizeRequests().antMatchers("/madison/document/download").permitAll();
 		http.authorizeRequests().antMatchers("/")/* .hasAnyRole("USER") */.fullyAuthenticated().and().httpBasic();
 		http.authorizeRequests().antMatchers("/", "/api/**").permitAll().anyRequest().authenticated().and().httpBasic();
 		http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
@@ -51,7 +52,7 @@ public class CustomAuthentication extends WebSecurityConfigurerAdapter {
 				"/webui/**", "/h2-console/**", "/*.jsp", "/**/*.jsp", "/configuration/**", "/swagger-ui/**", "/ui/**",
 				"/swagger-resources/**", "/api-docs", "/api-docs/**", "/fonts/**", "/v2/api-docs/**", "/*.html",
 				"/**/*.html", "/*.jpg", "/**/*.css", "/**/*.js", "/**/*.png", "/**/*.jpg", "/**/*.gif", "/**/*.svg",
-				"/**/*.ico", "/**/*.ttf", "/**/*.woff", "/**/*.woff2", "/**/*.otf");
+				"/**/*.ico", "/**/*.ttf", "/**/*.woff", "/**/*.woff2", "/**/*.otf","/madison/document/download?FilePath=");
 	}
 	
 	@Bean
