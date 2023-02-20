@@ -145,15 +145,16 @@ public class ParallelThreadExecutionImpl {
 			HomePositionMaster hpm =homePositionMasterRepository.findByApplicationNo(applicationNo);
 			String firstName =StringUtils.isBlank(info.getFirstName())?"":info.getFirstName();
 			String lastName =StringUtils.isBlank(info.getLastName())?"":info.getLastName();
-
+			List<MotorDataDetail> vehicleList =motorDataDetailRepository.findByApplicationNo(applicationNo);
 			 quote =QuoteInfoRes.builder()
 					.currency(StringUtils.isBlank(hpm.getCurrency())?"":hpm.getCurrency())
 					.customerName(firstName+lastName)
 					.email(StringUtils.isBlank(info.getEmail())?"":info.getEmail())
-					.policyType("")
+					.policyType(vehicleList.get(0).getPolicytype()==null?"":vehicleList.get(0).getPolicytype().toString())
 					.productName("MotorInsurance")
 					.quoteDate(sdf.format(hpm.getEntryDate()))
 					.quoteNo(hpm.getQuoteNo().toString())
+					.productId(hpm.getProductId().toString())
 					.build();
 		}catch (Exception e) {
 			e.printStackTrace();

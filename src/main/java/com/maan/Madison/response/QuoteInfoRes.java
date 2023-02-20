@@ -29,5 +29,7 @@ public class QuoteInfoRes {
 	private String email;
 	@JsonProperty("Currency")
 	private String currency;
+	@JsonProperty("ProductId")
+	private String productId;
 
 }

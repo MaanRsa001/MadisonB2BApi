@@ -217,13 +217,13 @@ public class MadisonInputValidation {
 			if(StringUtils.isBlank(req.getPolicyStartDate())) {
 				list.add(new ErrorList("101","PolicyStartDate","Please enter policy startdate"));
 			}else if(!regularExp(DATE_EXP, req.getPolicyStartDate())) {
-				list.add(new ErrorList("101","PolicyStartDate","Please enter valid policy startdate format : dd/mm/yyyy"));
+				//list.add(new ErrorList("101","PolicyStartDate","Please enter valid policy startdate format : dd/mm/yyyy"));
 
 			}
 			if(StringUtils.isBlank(req.getPolicyEndDate())) {
 				list.add(new ErrorList("101","PolicyEndDate","Please enter policy enddate"));
 			}else if(!regularExp(DATE_EXP, req.getPolicyEndDate())) {
-				list.add(new ErrorList("101","PolicyEndDate","Please enter valid policy enddate format : dd/mm/yyyy"));
+				//list.add(new ErrorList("101","PolicyEndDate","Please enter valid policy enddate format : dd/mm/yyyy"));
 
 			}
 			

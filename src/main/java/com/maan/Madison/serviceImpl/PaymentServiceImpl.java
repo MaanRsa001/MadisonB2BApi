@@ -293,6 +293,7 @@ public class PaymentServiceImpl implements PaymentService {
 	public CommonResponse doAirtelPayment(MadionPaymentRequest req) {
 		CommonResponse res = new CommonResponse();
 		AirtelPaymentResponse payRes =new AirtelPaymentResponse();
+		List<ErrorList> error = new ArrayList<ErrorList>();
 		String paymentStatus="";
 		try {
 			String merchantRefNo=insertPaymentDetails(req);
@@ -349,11 +350,31 @@ public class PaymentServiceImpl implements PaymentService {
 						}
 						
 					}
+					
+					if("TS".equalsIgnoreCase(paymentStatus)) {
+						MotorIntegrationRequest inteReq =new MotorIntegrationRequest();
+						inteReq.setQuoteNo(req.getQuoteNo());
+						inteReq.setBranchCode(req.getBranchCode());
+						inteReq.setProductId(req.getProductId());
+						res=integration.integration(inteReq);
+					}else {
+						res.setMessage("ERROR");
+						error.add(new ErrorList("100","AirtelPayment","We have not received amount for this quotation "+req.getQuoteNo()+" "));
+						res.setErrors(error);
+					}
+					
+			}else {
+				res.setMessage("ERROR");
+				error.add(new ErrorList("100","AirtelPayment","Something went wrong in server .Please contact admin...!"));
+				res.setErrors(error);			
+				
 			}
-			res.setMessage(paymentStatus);
-			res.setResponse(StringUtils.isBlank(paymentStatus)?"Server busy please try again later!":paymentStatus);		}catch (Exception e) {
+			}catch (Exception e) {
 			log.error(e);
 			e.printStackTrace();
+			res.setMessage("ERROR");
+			error.add(new ErrorList("100","AirtelPayment",e.getMessage()));
+			return res;
 		}
 		return res;
 	}
@@ -362,20 +383,6 @@ public class PaymentServiceImpl implements PaymentService {
 		CommonResponse res = new CommonResponse();
 		try {
 			AirtelPaymentResponse payRes=checkAirtelPaymentStatus(merchant_ref_no);
-			/*String paymentStatus=StringUtils.isBlank(payRes.getData().getTransaction().getStatus())?"":payRes.getData().getTransaction().getStatus();
-			Map<String,Object> payDet=paymentRepo.getQuoteNoByMerchantRefNo(merchant_ref_no);
-			quoteNo=payDet.get("quote_no")==null?"":payDet.get("quote_no").toString();
-			productId=payDet.get("product_id")==null?"":payDet.get("product_id").toString();
-			log.info("airtelPaymentStatus || quote_no :"+quoteNo+"|| product_id :"+productId);
-			if("TIP".equalsIgnoreCase(paymentStatus)) {
-				paymentRepo.updatePaymentStatus("P",merchant_ref_no,quoteNo,productId);
-			}else if("TF".equalsIgnoreCase(paymentStatus)) {
-				paymentRepo.updatePaymentStatus("F",merchant_ref_no,quoteNo,productId);
-			}else if ("TS".equalsIgnoreCase(paymentStatus)) {
-				paymentRepo.updatePaymentStatus("S",merchant_ref_no,quoteNo,productId);
-			}else {
-				paymentRepo.updatePaymentStatus("E",merchant_ref_no,quoteNo,productId);
-			}*/
 			res.setResponse(payRes);
 		}catch (Exception e) {
 			log.error(e);
