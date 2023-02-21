@@ -5,7 +5,6 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -23,6 +22,7 @@ import com.maan.Madison.entity.MotorPolicyCoverData;
 import com.maan.Madison.entity.MotorPolicyDetails;
 import com.maan.Madison.entity.PersonalInfo;
 import com.maan.Madison.repository.HomePositionMasterRepository;
+import com.maan.Madison.repository.ListItemValueRepository;
 import com.maan.Madison.repository.MotorDataDetailRepository;
 import com.maan.Madison.repository.MotorMakeMasterRepository;
 import com.maan.Madison.repository.MotorPolicyCoverDataRepository;
@@ -31,7 +31,6 @@ import com.maan.Madison.repository.PersonalInfoRepository;
 import com.maan.Madison.request.MadisonQuoteRequest;
 import com.maan.Madison.request.PolicyInfoRequest;
 import com.maan.Madison.request.QuoteRequest;
-import com.maan.Madison.request.VehicleInfoRequest;
 import com.maan.Madison.response.CustomerInfoRes;
 import com.maan.Madison.response.PremiumInfoRes;
 import com.maan.Madison.response.QuoteInfoRes;
@@ -56,6 +55,8 @@ public class ParallelThreadExecutionImpl {
 	private MotorMakeMasterRepository makeMasterRepository;
 	@Autowired
 	private MotorPolicyCoverDataRepository motorPolicyCoverDataRepository;
+	@Autowired
+	private ListItemValueRepository listItemValueRepository;
 
 	SimpleDateFormat sdf =new SimpleDateFormat("dd/MM/yyyy");
 
@@ -140,17 +141,24 @@ public class ParallelThreadExecutionImpl {
 	@Async
 	public CompletableFuture<QuoteInfoRes> getQuoteInfoRes(String customerId, Long applicationNo) {
 		QuoteInfoRes quote = new QuoteInfoRes();
+		String policyname = "";
 		try {
 			PersonalInfo info=personalInfoRepository.findById(Long.valueOf(customerId)).get();
 			HomePositionMaster hpm =homePositionMasterRepository.findByApplicationNo(applicationNo);
 			String firstName =StringUtils.isBlank(info.getFirstName())?"":info.getFirstName();
 			String lastName =StringUtils.isBlank(info.getLastName())?"":info.getLastName();
 			List<MotorDataDetail> vehicleList =motorDataDetailRepository.findByApplicationNo(applicationNo);
+			
+			if(StringUtils.isNotBlank(vehicleList.get(0).getPolicytype().toString())) {
+				policyname = listItemValueRepository.getItemDesc(vehicleList.get(0).getPolicytype()==null?"":vehicleList.get(0).getPolicytype().toString());
+			}
+			
 			 quote =QuoteInfoRes.builder()
 					.currency(StringUtils.isBlank(hpm.getCurrency())?"":hpm.getCurrency())
 					.customerName(firstName+lastName)
 					.email(StringUtils.isBlank(info.getEmail())?"":info.getEmail())
 					.policyType(vehicleList.get(0).getPolicytype()==null?"":vehicleList.get(0).getPolicytype().toString())
+					.policyname(StringUtils.isBlank(policyname)?"":policyname)
 					.productName("MotorInsurance")
 					.quoteDate(sdf.format(hpm.getEntryDate()))
 					.quoteNo(hpm.getQuoteNo().toString())
@@ -330,5 +338,5 @@ public class ParallelThreadExecutionImpl {
 		}
 		return CompletableFuture.completedFuture(response);
 	}
-
+	
 }

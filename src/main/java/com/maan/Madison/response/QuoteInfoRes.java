@@ -21,6 +21,8 @@ public class QuoteInfoRes {
 	private String customerName;
 	@JsonProperty("PolicyType")
 	private String policyType;
+	@JsonProperty("PolicyName")
+	private String policyname;
 	@JsonProperty("QuoteDate")
 	private String quoteDate;
 	@JsonProperty("ProductName")
