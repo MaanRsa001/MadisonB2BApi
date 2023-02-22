@@ -82,4 +82,9 @@ public class DocumentUploadController {
 	public CommonResponse documentDelete(@RequestBody DocumentDeleteReq req) {
 		return service.documentDelete(req);
 	}
+	
+	@GetMapping("/get/policy/certificate")
+	public CommonResponse getPolicyCertificate(@RequestParam ("quoteNo") String quoteNo,@RequestParam("vehicleId") String vehicleId) {
+		return service.getPolicyCertificate(quoteNo,vehicleId);
+	}
 }

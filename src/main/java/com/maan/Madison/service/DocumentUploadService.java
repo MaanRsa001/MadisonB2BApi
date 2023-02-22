@@ -18,4 +18,6 @@ public interface DocumentUploadService {
 
 	CommonResponse documentDelete(DocumentDeleteReq req);
 
+	CommonResponse getPolicyCertificate(String quoteNo, String vehicleId);
+
 }

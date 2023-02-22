@@ -36,8 +36,10 @@ import com.maan.Madison.repository.MotorFinanceBankMasterRepository;
 import com.maan.Madison.repository.MotorMakeMasterRepository;
 import com.maan.Madison.repository.MotorModelMasterRepository;
 import com.maan.Madison.request.DeductibleReq;
+import com.maan.Madison.request.GetVehicleTypeReq;
 import com.maan.Madison.response.CommonResponse;
 import com.maan.Madison.response.DropDownRes;
+import com.maan.Madison.response.GetVehicleTypeRes;
 import com.maan.Madison.response.PaymentBankRes;
 import com.maan.Madison.service.DropDownService;
 
@@ -91,15 +93,15 @@ public class DropDownServiceImpl implements DropDownService {
 		CommonResponse res = new CommonResponse();
 		List<DropDownRes> resList =new ArrayList<DropDownRes>();
 		try {
-			List<ListItemValue> list=listItemValueRepository.findByItemTypeIgnoreCaseAndStatus("policytype","Y");
+			List<Map<String,Object>> list=listItemValueRepository.getPolicyTypes();
 			if(list.size()>0) {
-				list.forEach(p->{
+					list.forEach(p ->{
 					DropDownRes r =DropDownRes.builder()
-							.code(StringUtils.isBlank(p.getItemCode())?"":p.getItemCode())
-							.description(StringUtils.isBlank(p.getItemValue())?"":p.getItemValue())
+							.code(p.get("POLICYTYPE_ID")==null?"":p.get("POLICYTYPE_ID").toString())
+							.description(p.get("POLICYTYPE_DESC_ENGLISH")==null?"":p.get("POLICYTYPE_DESC_ENGLISH").toString())
 							.build();
 					resList.add(r);
-				});
+					});
 				res.setMessage("SUCCESS");
 				res.setResponse(resList.stream().sorted(Comparator.comparing(DropDownRes ::getDescription)));
 			}else {
@@ -558,7 +560,7 @@ public class DropDownServiceImpl implements DropDownService {
 		CommonResponse res = new CommonResponse();
 		try {
 			List<Map<String,Object>> list =listItemValueRepository.getPaymentBank();
-			if(CollectionUtils.isEmpty(list)) {
+			if(!CollectionUtils.isEmpty(list)) {
 				Map<String,Object> m =list.get(0);
 				PaymentBankRes paymentBank =PaymentBankRes.builder()
 						.accountName(m.get("ACCOUNT_HOLDER")==null?"":m.get("ACCOUNT_HOLDER").toString())
@@ -576,6 +578,46 @@ public class DropDownServiceImpl implements DropDownService {
 			}else {
 				res.setMessage("FAILED");
 				res.setResponse(null);
+			}
+		}catch (Exception e) {
+			log.error(e);
+			e.printStackTrace();
+		}
+		return res;
+	}
+
+	@Override
+	public CommonResponse getVehicleTypes(GetVehicleTypeReq req) {
+		CommonResponse res = new CommonResponse();
+		Set<GetVehicleTypeRes> set =new HashSet<GetVehicleTypeRes>();
+		try {
+			String vehicleId =StringUtils.isBlank(req.getVehicleId())?"99999":req.getVehicleId();
+			String applicationNo =StringUtils.isBlank(req.getApplicationNo())?"":req.getApplicationNo();
+			String vehicleTypeId=listItemValueRepository.vehicleTypeId(applicationNo, vehicleId, "99999");
+			String makeId =StringUtils.isBlank(req.getMakeId())?"":req.getMakeId();
+			String modelId =StringUtils.isBlank(req.getModelId())?"":req.getModelId();
+			String branchCode=StringUtils.isBlank(req.getBranchCode())?"":req.getBranchCode();
+			List<Map<String,Object>> list =listItemValueRepository.getVehicleDetails(makeId,modelId,branchCode,vehicleTypeId);
+			if(!CollectionUtils.isEmpty(list)) {
+				list.forEach(p ->{
+					GetVehicleTypeRes vehicleType =GetVehicleTypeRes.builder()
+							.bodyId(p.get("BODY_ID")==null?"":p.get("BODY_ID").toString())
+							.bodyType(p.get("BODYNAME")==null?"":p.get("BODYNAME").toString())
+							.make(p.get("MAKE_NAME")==null?"":p.get("MAKE_NAME").toString())
+							.makeId(p.get("MAKE_ID")==null?"":p.get("MAKE_ID").toString())
+							.model(p.get("MODEL_ID")==null?"":p.get("MODEL_ID").toString())
+							.modelId(p.get("MODEL_NAME")==null?"":p.get("MODEL_NAME").toString())
+							.vehicleUsage(p.get("VTYPE_NAME")==null?"":p.get("VTYPE_NAME").toString())
+							.vehicleUseageId(p.get("VTYPE_ID")==null?"":p.get("VTYPE_ID").toString())
+							.build();
+					set.add(vehicleType);
+					res.setMessage("SUCCESS");
+					res.setResponse(set);
+					
+				});
+			}else {
+				res.setMessage("FAILED");
+				res.setResponse("No record found you have choosed make & model");
 			}
 		}catch (Exception e) {
 			log.error(e);

@@ -47,7 +47,16 @@ public interface ListItemValueRepository  extends JpaRepository<ListItemValue,Li
 	@Query(value = " SELECT PAYMENTBANK_ID, (SELECT LIV.ITEM_VALUE FROM LIST_ITEM_VALUE LIV WHERE LIV.ITEM_TYPE='PAYMENTTYPE' AND ITEM_CODE=PAYMENT_TYPE) PAYMENT_TYPE, ACCOUNT_HOLDER,AMEND_ID, TO_CHAR(EFFECTIVE_DATE,'DD/MM/YYYY') EFFECTIVE_DATE, DECODE(STATUS,'Y','Active','N','Deactive') STATUS,STATUS STATUS_EDIT,BANK_NAME,REMARKS, ACCOUNT_NUMBER, BRANCH_NAME, BRANCH_CODE, CURRENCY_TYPE, SWIFT_CODE FROM MOTOR_PAYMENT_BANK_MASTER WHERE AMEND_ID = (SELECT MAX(AMEND_ID) FROM MOTOR_PAYMENT_BANK_MASTER MSM WHERE PAYMENTBANK_ID = MSM.PAYMENTBANK_ID)",nativeQuery=true)
 	List<Map<String,Object>> getPaymentBank();
 
-	@Query(value = "select ITEM_DESC from List_Item_Value where ITEM_TYPE='POLICYTYPE' and item_code=?1 and status='Y'",nativeQuery=true)
-	String getItemDesc(String ItemCode);
+	@Query(value = "select POLICYTYPE_DESC_ENGLISH from motor_policytype_master where POLICYTYPE_ID=?1 and status='Y'",nativeQuery=true)
+	List<Map<String,Object>> getPolicyDesc(String policyTypeId);
+
+	@Query(value="select POLICYTYPE_ID,POLICYTYPE_DESC_ENGLISH from motor_policytype_master where status='Y'",nativeQuery=true)
+	List<Map<String, Object>> getPolicyTypes();
+	
+	@Query(value ="SELECT NVL((SELECT DISTINCT VEHICLE_TYPE  FROM MOTOR_DATA_DETAIL WHERE APPLICATION_NO=?1 AND VEHICLE_ID!=?2),?3) VEHICLE_TYPE_ID FROM DUAL",nativeQuery=true)
+	String vehicleTypeId(String applicationNo,String vehicleId,String commonId);	
+	
+	@Query(value=" Select MMM.Make_id,MMM.Make_Name,MMD.Model_id,MMD.Model_name,MMD.Body_id, (  Select BODY_NAME       From Motor_Bodytype_master Mdm       Where Mdm.Body_id=MMD.Body_id       And mdm.status='Y'       and trunc(Mdm.effective_date)<=Trunc(Sysdate)       And mdm.amend_id=(       Select Max(amend_id)       from Motor_Bodytype_master Mb       Where mdm.body_id=Mb.BODY_ID       and trunc(mdm.effective_date)<=Trunc(Mb.effective_date))) BodyName,mbb.       vtype_id, (       Select VEHICLETYPE_DESC       From Motor_vehicletype_master mvm       Where mvm.VTYPE_ID=mbb.vtype_id       and mvm.status='Y'       and trunc(mvm.effective_date)<Trunc(Sysdate)       and mvm.Amend_id=(       Select max(Amend_id)       from Motor_vehicletype_master mv       where mvm.vtype_id=mv.vtype_id       and trunc(mvm.effective_date)<=trunc(mv.effective_date))) vtype_name       From Motor_make_master MMM,Motor_Model_master MM, MOTOR_MODEL_DETAIL MMD       ,Motor_bodytype_detail mbb       Where MMM.make_id=MM.Make_id       and MMD.Model_id=MM.Model_id       and mbb.body_id=MMD.Body_id       and MMM.Amend_id=(       Select max(amend_id)       from Motor_make_master MM       where MM.make_id=MMM.MAKE_ID       and MM.branch_code=MMM.branch_code       and Trunc(MM.effective_date) <= trunc(sysdate))       and MM.Amend_id=(       Select Max(Amend_id)       from Motor_Model_master M       where M.model_id=mm.model_id       and M.branch_code=MM.branch_code       and Trunc(M.effective_date) <= trunc(sysdate))       and mbb.Amend_id=(Select max(amend_id) from Motor_bodytype_detail MCM where MCM.TYPE_OF_BODY_ID=mbb.TYPE_OF_BODY_ID) and MMM.status='Y'       and MM.status='Y' and mbb.STATUS='Y'  and MMD.status='Y' and Trunc(MMM.effective_date) <= trunc(sysdate)       and Trunc(MM.effective_date) <= trunc(sysdate)       and MMM.make_id=?1       and MM.Model_id=?2       and MMM.Branch_code=?3       and mmm.branch_code=MM.branch_Code       and Decode(?4,'99999','99999',mbb.VTYPE_ID)=Decode(?4,'99999','99999',?4)",nativeQuery=true)
+	List<Map<String,Object>> getVehicleDetails(String makeId,String modelId,String branchCode,String vehicleTypeId);
 	
 }

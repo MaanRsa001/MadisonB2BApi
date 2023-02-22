@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.maan.Madison.request.DeductibleReq;
+import com.maan.Madison.request.GetVehicleTypeReq;
 import com.maan.Madison.response.CommonResponse;
 import com.maan.Madison.service.DropDownService;
 
@@ -117,5 +118,8 @@ public class DropDownController {
 		return service.getPaymentBank();
 	}
 	
-	
+	@PostMapping("/get/vehicletypes")
+	public CommonResponse getVehicleTypes(@RequestBody GetVehicleTypeReq req) {
+		return service.getVehicleTypes(req);
+	}
 }

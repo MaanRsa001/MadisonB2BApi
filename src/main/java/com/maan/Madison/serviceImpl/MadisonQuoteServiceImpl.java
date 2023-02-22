@@ -309,6 +309,7 @@ public class MadisonQuoteServiceImpl implements MadisonQuoteService{
 				quoteRes.setReferalRemarks(referalRemarks);
 				quoteRes.setQuoteInfo(quoteInfo.get());
 				comres.setResponse(quoteRes);
+				quoteRes.setApplicationNo(applicationNo.toString());
 				comres.setMessage("REFERAL");
 				hpm.setReferralDescription(referalRemarks);
 				hpm.setStatus("R");
@@ -404,7 +405,7 @@ public class MadisonQuoteServiceImpl implements MadisonQuoteService{
 						.body(Long.valueOf(req.getBodyTypeId()))
 						.manufactureYear(req.getManufacureYear())
 						.seatingCapacity(Long.valueOf(req.getSeatingCapacity()))
-						.suminsuredValueLocal(Double.valueOf(req.getSumInsured()))
+						.suminsuredValueLocal(StringUtils.isBlank(req.getSumInsured())?null:Double.valueOf(req.getSumInsured()))
 						.vehicleType(Long.valueOf(req.getVehicleUsage()))
 						.agencyRepair("N")
 						.vehicleColor(StringUtils.isBlank(req.getVehicleColor())?null:Long.valueOf(req.getVehicleColor()))
@@ -494,7 +495,6 @@ public class MadisonQuoteServiceImpl implements MadisonQuoteService{
 					.bankOfFinance(mdd.getBankId()==null?"":mdd.getBankId().toString())
 					.bodyTypeId(mdd.getBody().toString())
 					.chassisNo(mdd.getChassisNo())
-					//.driverDateOfBirth(mdd.getDriverDob()==null?"":sdf.format(mdd.getDriverDob()))
 					.electricalAccesAmt(mdd.getElectricalSi()==null?"":mdd.getElectricalSi().toString())
 					.engineCapacity(mdd.getCubicCapacity()==null?"":mdd.getCubicCapacity().toString())
 					.engineNo(mdd.getEngineNumber())
@@ -509,7 +509,7 @@ public class MadisonQuoteServiceImpl implements MadisonQuoteService{
 					.ProductId(mdd.getProductId().toString())
 					.registrationNo(mdd.getRegistrationNo())
 					.seatingCapacity(mdd.getSeatingCapacity().toString())
-					.sumInsured(mdd.getSuminsuredValueLocal().toString())
+					.sumInsured(mdd.getSuminsuredValueLocal()==null?"":mdd.getSuminsuredValueLocal().toString())
 					//.quoteNo(mdd.getQuoteNo().toString())
 					//.policyEndDate(sdf.format(mdd.getExpiryDate()))
 					//.policyStartDate(sdf.format(mdd.getInceptionDate()))

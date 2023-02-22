@@ -6,6 +6,7 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -141,7 +142,6 @@ public class ParallelThreadExecutionImpl {
 	@Async
 	public CompletableFuture<QuoteInfoRes> getQuoteInfoRes(String customerId, Long applicationNo) {
 		QuoteInfoRes quote = new QuoteInfoRes();
-		String policyname = "";
 		try {
 			PersonalInfo info=personalInfoRepository.findById(Long.valueOf(customerId)).get();
 			HomePositionMaster hpm =homePositionMasterRepository.findByApplicationNo(applicationNo);
@@ -149,16 +149,14 @@ public class ParallelThreadExecutionImpl {
 			String lastName =StringUtils.isBlank(info.getLastName())?"":info.getLastName();
 			List<MotorDataDetail> vehicleList =motorDataDetailRepository.findByApplicationNo(applicationNo);
 			
-			if(StringUtils.isNotBlank(vehicleList.get(0).getPolicytype().toString())) {
-				policyname = listItemValueRepository.getItemDesc(vehicleList.get(0).getPolicytype()==null?"":vehicleList.get(0).getPolicytype().toString());
-			}
+			List<Map<String,Object>> policyList = listItemValueRepository.getPolicyDesc(vehicleList.get(0).getPolicytype()==null?"":vehicleList.get(0).getPolicytype().toString());
 			
 			 quote =QuoteInfoRes.builder()
 					.currency(StringUtils.isBlank(hpm.getCurrency())?"":hpm.getCurrency())
 					.customerName(firstName+lastName)
 					.email(StringUtils.isBlank(info.getEmail())?"":info.getEmail())
 					.policyType(vehicleList.get(0).getPolicytype()==null?"":vehicleList.get(0).getPolicytype().toString())
-					.policyname(StringUtils.isBlank(policyname)?"":policyname)
+					.policyname(policyList.get(0).get("POLICYTYPE_DESC_ENGLISH")==null?"":policyList.get(0).get("POLICYTYPE_DESC_ENGLISH").toString())
 					.productName("MotorInsurance")
 					.quoteDate(sdf.format(hpm.getEntryDate()))
 					.quoteNo(hpm.getQuoteNo().toString())
@@ -316,7 +314,7 @@ public class ParallelThreadExecutionImpl {
 			}
 			
 		
-			Double before_tax_premium =(basePremium+electricalAccess+nonElectricalAccess)+deductables;
+			Double before_tax_premium =hpm.getPremium()==null?0D:hpm.getPremium();
 			
 			String overallPremium =hpm.getOverallPremium()==null?"":hpm.getOverallPremium().toString();
 			

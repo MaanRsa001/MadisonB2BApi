@@ -1,0 +1,99 @@
+BODY {
+	FONT-SIZE: 11px; MARGIN: 0px; COLOR: #666666; LINE-HEIGHT: 16px; FONT-FAMILY: Arial, Helvetica, sans-serif; BACKGROUND-COLOR: #f4f4f4; TEXT-ALIGN: justify
+}
+#top A.top_nav {
+	FONT-SIZE: 10px; COLOR: #000000; TEXT-DECORATION: none
+}
+#top A.top_nav:hover {
+	FONT-SIZE: 10px; COLOR: #000000; TEXT-DECORATION: underline
+}
+#more A.morelink {
+	FONT-SIZE: 10px; COLOR: #000000; FONT-FAMILY: Arial; TEXT-ALIGN: center; TEXT-DECORATION: none
+}
+#more A.morelink:hover {
+	FONT-SIZE: 10px; COLOR: #e86f00; FONT-FAMILY: Arial; TEXT-ALIGN: center; TEXT-DECORATION: none
+}
+#foot .privacy {
+	FONT-SIZE: 11px; COLOR: white; FONT-FAMILY: Arial; TEXT-DECORATION: none
+}
+.bottomtext {
+	FONT-SIZE: 11px; COLOR: white; FONT-FAMILY: Arial; TEXT-DECORATION: none
+}
+.menuBarContnrCSS {
+	BACKGROUND-IMAGE: url(images/nav_in.gif); WIDTH: 1000px; HEIGHT: 40px
+}
+.rootMenuItmCSS {
+	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #ffffff; FONT-FAMILY: Arial
+}
+.rootMenuItmCSS TD {
+	WIDTH: 140px; HEIGHT: 40px; TEXT-ALIGN: center
+}
+.rootMenuItmSelCSSOver {
+	FONT-WEIGHT: bold; FONT-SIZE: 11px; BACKGROUND-IMAGE: url(images/nav_hover.jpg); COLOR: #000000; FONT-FAMILY: Arial
+}
+.rootMenuItmSelCSSOver TD {
+	WIDTH: 140px; HEIGHT: 40px; TEXT-ALIGN: center
+}
+.rootMenuItemActvCSS {
+	FONT-WEIGHT: bold; FONT-SIZE: 11px; BACKGROUND-IMAGE: url(images/nav_hover.jpg); COLOR: #000000; FONT-FAMILY: Arial
+}
+.rootMenuItemActvCSS TD {
+	BACKGROUND-IMAGE: url(images/nav_hover.jpg); WIDTH: 140px; HEIGHT: 40px; TEXT-ALIGN: center
+}
+.subMenuCSS {
+	FONT-SIZE: 12px; WIDTH: 180px; COLOR: #ffffff; FONT-FAMILY: Arial; BACKGROUND-COLOR: #ffffff
+}
+.subMenuCSS TD {
+	BORDER-LEFT-COLOR: #4f6180; BORDER-BOTTOM-COLOR: #4f6180; WIDTH: 180px; HEIGHT: 30px; BORDER-RIGHT-COLOR: #4f6180
+}
+.subMenuItemSelCss {
+	FONT-WEIGHT: bold; FONT-SIZE: 12px; BACKGROUND-IMAGE: url(images/navblue.gif); WIDTH: 180px; COLOR: #ffffff; FONT-FAMILY: Arial; HEIGHT: 30px
+}
+.menuIconCSS {
+	DISPLAY: none; BACKGROUND-COLOR: silver
+}
+.menuIconCSS TD {
+	WIDTH: 0px
+}
+#txtHead {
+	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: #e86f00; FONT-FAMILY: Arial
+}
+#txtContent {
+	FONT-SIZE: 11px; COLOR: #666666; FONT-FAMILY: Arial
+}
+#txtContentbold {
+	FONT-WEIGHT: bold; FONT-SIZE: 11px; COLOR: black; FONT-FAMILY: Arial
+}
+#backbg {
+	BACKGROUND-IMAGE: url(images/top_bg.jpg); BACKGROUND-REPEAT: repeat-x
+}
+#ContactUsId A.email {
+	FONT-SIZE: 10px; COLOR: #004785; FONT-FAMILY: Arial
+}
+#ContactUsId A.email:hover {
+	FONT-SIZE: 10px; COLOR: #004785; FONT-FAMILY: Arial; TEXT-DECORATION: underline
+}
+#numbers {
+	FONT-SIZE: 11px; COLOR: #616161; FONT-FAMILY: arial
+}
+#faq A {
+	FONT-SIZE: 11px; COLOR: #616161; FONT-FAMILY: arial
+}
+#faq A.qa {
+	FONT-SIZE: 11px; COLOR: #616161; FONT-FAMILY: arial
+}
+#faq A.qa:hover {
+	FONT-SIZE: 11px; COLOR: #616161; FONT-FAMILY: arial; TEXT-DECORATION: underline
+}
+#careerheading TD.careerheading {
+	FONT-WEIGHT: normal; FONT-SIZE: 17px; COLOR: #fd8339; FONT-FAMILY: Arial
+}
+.subbg {
+	BACKGROUND-IMAGE: url(images/line_4.gif); BACKGROUND-REPEAT: repeat-y
+}
+#careers A.mail {
+	FONT-SIZE: 10px; COLOR: #004785; FONT-FAMILY: Arial; TEXT-DECORATION: none
+}
+#careers A.mail:hover {
+	FONT-SIZE: 10px; COLOR: #004785; FONT-FAMILY: Arial; TEXT-DECORATION: underline
+}

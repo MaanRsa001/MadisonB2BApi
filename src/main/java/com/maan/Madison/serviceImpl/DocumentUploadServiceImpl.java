@@ -1,16 +1,21 @@
 package com.maan.Madison.serviceImpl;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Random;
 
 import javax.mail.Message;
 import javax.mail.Session;
@@ -19,6 +24,7 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import javax.persistence.Tuple;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -27,6 +33,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
+import com.lowagie.text.Document;
+import com.lowagie.text.DocumentException;
+import com.lowagie.text.pdf.PdfContentByte;
+import com.lowagie.text.pdf.PdfImportedPage;
+import com.lowagie.text.pdf.PdfReader;
+import com.lowagie.text.pdf.PdfWriter;
 import com.maan.Madison.controller.DocumentUploadController;
 import com.maan.Madison.entity.DocumentUploadDetails;
 import com.maan.Madison.entity.DocumentUploadDetailsId;
@@ -44,6 +60,12 @@ import com.maan.Madison.response.DocumentUploadGetRes;
 import com.maan.Madison.service.DocumentUploadService;
 import com.maan.Madison.utilityServiceImpl.CriteriaQueryServiceImpl;
 import com.maan.Madison.utilityServiceImpl.SMTPAuthenticator;
+
+import net.sf.jasperreports.engine.JasperCompileManager;
+import net.sf.jasperreports.engine.JasperExportManager;
+import net.sf.jasperreports.engine.JasperFillManager;
+import net.sf.jasperreports.engine.JasperPrint;
+import net.sf.jasperreports.engine.JasperReport;
 
 @Service
 public class DocumentUploadServiceImpl implements DocumentUploadService{
@@ -285,6 +307,122 @@ public class DocumentUploadServiceImpl implements DocumentUploadService{
 		}
 		return res;
 	}
+
+	@Override
+	public CommonResponse getPolicyCertificate(String quoteNo, String vehicleId) {
+		CommonResponse res = new CommonResponse();
+		try {
+			String classpath = this.getClass().getClassLoader().getResource("").getPath();
+			classpath = classpath.replaceAll("%20", " ");
+			classpath = classpath.substring(1, classpath.length());
+
+			String imagepath = classpath + "images/";
+			
+			//String certificatePath = cs.getappconstantsProperty().getProperty("");
+			//String certificatePath = cs.getappconstantsProperty().getProperty("");
+
+			String jasperPath = imagepath + "/" + quoteNo + "PolicyCertificate.pdf";
+
+			List<Map<String,Object>> qrData =motorDataDetailRepository.getCertificateDetails(quoteNo, vehicleId);
+			
+			String polNo=qrData.get(0).get("POLICY_NO")==null?"":qrData.get(0).get("POLICY_NO").toString();
+			String vehRegNo=qrData.get(0).get("VECHICLE_REG_NO")==null?"":qrData.get(0).get("VECHICLE_REG_NO").toString();
+			String issueDate=qrData.get(0).get("ISSUE_DATE")==null?"":qrData.get(0).get("ISSUE_DATE").toString();
+			String expDate=qrData.get(0).get("EXPIRY_DATE")==null?"":qrData.get(0).get("EXPIRY_DATE").toString();
+			String certNo=qrData.get(0).get("CERTIFICATE_NO")==null?"":qrData.get(0).get("CERTIFICATE_NO").toString();
+			String tag="MGen ZM";
+			String msg=polNo+"\r\n"+vehRegNo+"\r\n"+issueDate+"\r\n"+expDate+"\r\n"+certNo+"\r\n"+tag;
+			String loginId=qrData.get(0).get("LOGIN_ID")==null?"":qrData.get(0).get("LOGIN_ID").toString();
+
+			String userName =motorDataDetailRepository.getUserName(loginId);
+			
+			String qrCodePath ="C:\\Users\\MAANSAROVAR04\\Desktop\\DhofarWhatsappDetails\\"+quoteNo+".JPG";
+			String qrCodePath1 ="C:\\Users\\MAANSAROVAR04\\Desktop\\DhofarWhatsappDetails\\";
+			
+			generateQRCode(msg,200,200,qrCodePath);
+			
+			HashMap<String, Object> jasperParameter = new HashMap<String, Object>();
+			jasperParameter.put("Quoteno", quoteNo);
+			jasperParameter.put("Pvbranch", "01");
+			jasperParameter.put("Status", "");
+			jasperParameter.put("PvVechicle", vehicleId);
+			jasperParameter.put("imagePath", imagepath);
+			jasperParameter.put("Pvusername",userName==null?"":userName);
+			jasperParameter.put("QRPath", qrCodePath1);
+
+			Connection conn = getConnection();
+
+			InputStream is = this.getClass().getResourceAsStream("/jasper/PolicyCertificateNew.jrxml");
+
+			JasperReport jr = JasperCompileManager.compileReport(is);
+
+			JasperPrint jp = JasperFillManager.fillReport(jr, jasperParameter, conn);
+
+			JasperExportManager.exportReportToPdfFile(jp, jasperPath);
+			
+			File file = new File(jasperPath);
+			
+			
+			byte[] bytes = FileUtils.readFileToByteArray(file);
+
+			String encodeToString = Base64.getEncoder().encodeToString(bytes);
+			
+			res.setResponse(encodeToString);
+		}catch (Exception e) {
+			e.printStackTrace();
+			log.error(e);
+		}
+		return res;
+	}
 	
 
+	private Connection getConnection() {
+		Connection connection = null;
+		try {
+
+			String connType = cs.getappconstantsProperty().getProperty("connection.type");
+			connType = StringUtils.isBlank(connType) ? "spring" : connType;
+
+			if (connType.equalsIgnoreCase("spring"))
+				connection = cs.datasourceSpring().getConnection();
+			else
+				connection = cs.datasourceContext().getConnection();
+
+		} catch (Exception e) {
+			log.error(e);
+		}
+		return connection;
+	}
+	
+	private void doMerge(InputStream list, OutputStream outputStream) throws DocumentException, IOException {
+		Document document = new Document();
+		PdfWriter writer = PdfWriter.getInstance(document, outputStream);
+		document.open();
+		PdfContentByte cb = writer.getDirectContent();
+		
+			PdfReader reader = new PdfReader(list);
+			for (int i = 1; i <= reader.getNumberOfPages(); i++) {
+				document.newPage();
+				PdfImportedPage page = writer.getImportedPage(reader, i);
+				cb.addTemplate(page, 0, 0);
+			}
+
+		outputStream.flush();
+		document.close();
+		outputStream.close();
+	}
+	
+	
+	@SuppressWarnings("deprecation")
+	public void generateQRCode(String text, int width, int height, String filePath) {
+		try {
+			QRCodeWriter writer = new QRCodeWriter();
+			BitMatrix matrix = writer.encode(text, BarcodeFormat.QR_CODE, width, height);
+			MatrixToImageWriter.writeToFile(matrix, filePath.substring(filePath
+			        .lastIndexOf('.') + 1), new File(filePath));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
 }

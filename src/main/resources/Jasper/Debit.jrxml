@@ -1,0 +1,695 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Debit" pageWidth="595" pageHeight="700" columnWidth="523" leftMargin="36" rightMargin="36" topMargin="0" bottomMargin="20" uuid="32a3c862-ffeb-4187-b4fe-60e1d9da4a58">
+	<property name="ireport.zoom" value="1.1000000000000005"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<style name="common" hAlign="Left" vAlign="Middle" fontName="Arial" fontSize="9" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
+	<style name="common1" vAlign="Middle" isBlankWhenNull="false" fontName="Arial" fontSize="9" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false" isPdfEmbedded="true">
+		<paragraph lineSpacing="Single"/>
+	</style>
+	<parameter name="imagePath" class="java.lang.String"/>
+	<parameter name="Quoteno" class="java.lang.String"/>
+	<parameter name="Pvbranch" class="java.lang.String"/>
+	<parameter name="Status" class="java.lang.String"/>
+	<parameter name="Pvproduct" class="java.lang.String"/>
+	<queryString>
+		<![CDATA[select * from table (credit_debit_schedule($P{Quoteno},$P{Pvbranch},'DEBIT',$P{Pvproduct}))]]>
+	</queryString>
+	<field name="POLICY_TYPE" class="java.lang.String"/>
+	<field name="AGENT_NAME" class="java.lang.String"/>
+	<field name="INSURED_NAME" class="java.lang.String"/>
+	<field name="ADDRESS" class="java.lang.String"/>
+	<field name="POLICY_NO" class="java.lang.String"/>
+	<field name="POLICY_PERIOD" class="java.lang.String"/>
+	<field name="CREDIT_DATE" class="java.lang.String"/>
+	<field name="BRANCH" class="java.lang.String"/>
+	<field name="CREDIT_NOTE_NO" class="java.lang.String"/>
+	<field name="BINDER_NO" class="java.lang.String"/>
+	<field name="TPIN" class="java.lang.String"/>
+	<field name="COMMISSION" class="java.lang.String"/>
+	<field name="VAT" class="java.lang.String"/>
+	<field name="VAT_AMT" class="java.lang.String"/>
+	<field name="TOTAL" class="java.lang.String"/>
+	<field name="AMT_WORD" class="java.lang.String"/>
+	<field name="PLACE_OF_ISSUE" class="java.lang.String"/>
+	<field name="DATE_OF_ISSUE" class="java.lang.String"/>
+	<field name="DEBIT_NOTE_NO" class="java.lang.String"/>
+	<field name="DEBIT_DATE" class="java.lang.String"/>
+	<field name="PREMIUM" class="java.lang.String"/>
+	<field name="HEADER_IMG" class="java.lang.String"/>
+	<field name="CURRENCY" class="java.lang.String"/>
+	<field name="ADDRESS2" class="java.lang.String"/>
+	<field name="ADDRESS3" class="java.lang.String"/>
+	<field name="COUNTRY" class="java.lang.String"/>
+	<field name="PHONE" class="java.lang.String"/>
+	<field name="EMAIL" class="java.lang.String"/>
+	<background>
+		<band height="636" splitType="Stretch">
+			<rectangle>
+				<reportElement uuid="ffa248d4-4c85-44d8-9a9e-dd670ef986fb" stretchType="RelativeToBandHeight" x="0" y="84" width="523" height="552"/>
+				<graphicElement>
+					<pen lineWidth="0.5"/>
+				</graphicElement>
+			</rectangle>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement uuid="973a9b5a-df9e-471a-b971-c51c1aada060" stretchType="RelativeToBandHeight" mode="Opaque" x="200" y="373" width="300" height="80" forecolor="#FFCCCC"/>
+				<textElement>
+					<font fontName="Arial" size="54"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{Status}]]></textFieldExpression>
+			</textField>
+		</band>
+	</background>
+	<title>
+		<band splitType="Stretch"/>
+	</title>
+	<pageHeader>
+		<band height="83" splitType="Stretch">
+			<image scaleImage="FillFrame" hAlign="Center">
+				<reportElement uuid="353d0e70-dfe4-4e6f-8261-1a3c322b08a7" x="-19" y="3" width="168" height="80"/>
+				<imageExpression><![CDATA[$P{imagePath}+$F{HEADER_IMG}]]></imageExpression>
+			</image>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement uuid="aaff4216-af9f-4632-aabd-c6c0a126c4dd" style="common" stretchType="RelativeToBandHeight" x="314" y="33" width="206" height="15" isRemoveLineWhenBlank="true"/>
+				<box leftPadding="4"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="Arial" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA["tel: "+($F{PHONE}==null?"":$F{PHONE})]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement uuid="5aa4f6b1-a287-4cdd-a0e0-c89bfa24d214" style="common" stretchType="RelativeToBandHeight" x="314" y="63" width="207" height="15" isRemoveLineWhenBlank="true"/>
+				<box leftPadding="4"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="Arial" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA["website : www.madison.co.zm"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement uuid="c4b6e1d8-14db-43c6-91f2-f52f18be0321" style="common" stretchType="RelativeToBandHeight" x="314" y="18" width="207" height="15" isRemoveLineWhenBlank="true"/>
+				<box leftPadding="4"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="Arial" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{ADDRESS3}==null?"":$F{ADDRESS3}+",  "+($F{COUNTRY}==null?"":$F{COUNTRY})]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement uuid="7c0de342-44b8-499c-9d75-71ea4777b8ae" style="common" stretchType="RelativeToBandHeight" x="314" y="48" width="207" height="15" isRemoveLineWhenBlank="true"/>
+				<box leftPadding="4"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="Arial" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA["E-mail: "+($F{EMAIL}==null?"":$F{EMAIL})]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement uuid="f929eb5f-bf5c-4f3c-bfff-52a9386d457b" style="common" stretchType="RelativeToBandHeight" x="314" y="3" width="207" height="15" isRemoveLineWhenBlank="true"/>
+				<box leftPadding="4"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="Arial" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{ADDRESS2}==null?"":$F{ADDRESS2}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band splitType="Stretch"/>
+	</columnHeader>
+	<detail>
+		<band height="37" splitType="Stretch">
+			<textField isStretchWithOverflow="true">
+				<reportElement uuid="ceeced87-dcd7-46ed-a673-03ae451242ae" style="common1" stretchType="RelativeToTallestObject" x="185" y="0" width="107" height="15"/>
+				<box leftPadding="2"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" markup="none">
+					<font fontName="Arial" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["TAX INVOICE"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement uuid="be72affa-750c-43cb-90cc-2cdd3f5a2284" style="common1" stretchType="RelativeToTallestObject" x="185" y="15" width="107" height="15"/>
+				<box leftPadding="2"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" markup="none">
+					<font fontName="Arial" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["(DEBIT NOTE)"]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="20">
+			<textField>
+				<reportElement uuid="f255fa14-8877-4382-ae4e-2cc06584dfa7" style="common1" stretchType="RelativeToTallestObject" x="0" y="0" width="81" height="15"/>
+				<box leftPadding="5"/>
+				<textElement markup="none">
+					<font fontName="Arial" size="9" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Policy Type"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement uuid="3ef30117-df79-4742-ab4e-4b91bbdd3de4" style="common" stretchType="RelativeToBandHeight" x="91" y="0" width="10" height="14"/>
+				<box leftPadding="2" rightPadding="2"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="Arial" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[":"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="d7ecf666-70d1-4667-80c0-7adb22af54c3" style="common1" stretchType="RelativeToTallestObject" x="303" y="0" width="50" height="15"/>
+				<box leftPadding="2"/>
+				<textElement markup="none">
+					<font fontName="Arial" size="9" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Date"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement uuid="d8af9fc7-3292-4138-9712-7bd2c16176a0" style="common" stretchType="RelativeToBandHeight" x="382" y="1" width="10" height="14"/>
+				<box leftPadding="2" rightPadding="2"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="Arial" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[":"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement uuid="3458bf32-67a5-43d9-be10-d6e5ff4a4540" style="common" stretchType="RelativeToTallestObject" x="111" y="0" width="192" height="15" isPrintWhenDetailOverflows="true"/>
+				<box>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement/>
+				<textFieldExpression><![CDATA[($F{POLICY_TYPE}==null?"":$F{POLICY_TYPE})]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement uuid="d1b0b275-5989-44d9-84fa-c415b769b468" style="common" stretchType="RelativeToTallestObject" x="396" y="1" width="125" height="15" isPrintWhenDetailOverflows="true"/>
+				<box>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement/>
+				<textFieldExpression><![CDATA[($F{DEBIT_DATE}==null?"":$F{DEBIT_DATE})]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="20">
+			<textField>
+				<reportElement uuid="7af5ea01-d347-4568-99b3-d40092a3d3ce" style="common1" stretchType="RelativeToTallestObject" x="0" y="0" width="81" height="15"/>
+				<box leftPadding="5"/>
+				<textElement markup="none">
+					<font fontName="Arial" size="9" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Agent Name"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement uuid="428395ab-7b3e-4b82-9803-aa304528e186" style="common" stretchType="RelativeToBandHeight" x="91" y="0" width="10" height="14"/>
+				<box leftPadding="2" rightPadding="2"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="Arial" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[":"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="1c954907-5a8c-41a7-8d79-81d8fad5cfce" style="common1" stretchType="RelativeToTallestObject" x="303" y="0" width="50" height="15"/>
+				<box leftPadding="2"/>
+				<textElement markup="none">
+					<font fontName="Arial" size="9" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Branch"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement uuid="0e05e5b8-b3bf-4e6c-884b-c18f485db9ff" style="common" stretchType="RelativeToBandHeight" x="382" y="3" width="10" height="14"/>
+				<box leftPadding="2" rightPadding="2"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="Arial" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[":"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement uuid="ae04532d-d47d-4adb-9efa-17cd07e949b6" style="common" stretchType="RelativeToTallestObject" x="111" y="0" width="192" height="15" isPrintWhenDetailOverflows="true"/>
+				<box>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement/>
+				<textFieldExpression><![CDATA[($F{AGENT_NAME}==null?"":$F{AGENT_NAME})]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement uuid="f064f66e-2e68-4d2a-81c2-faad47477340" style="common" stretchType="RelativeToTallestObject" x="396" y="2" width="125" height="15" isPrintWhenDetailOverflows="true"/>
+				<box>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement/>
+				<textFieldExpression><![CDATA[($F{BRANCH}==null?"":$F{BRANCH})]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="19">
+			<textField>
+				<reportElement uuid="2ceb974a-c3bd-4c92-a0d1-2e34d3accdb1" style="common1" stretchType="RelativeToTallestObject" x="0" y="0" width="81" height="15"/>
+				<box leftPadding="5"/>
+				<textElement markup="none">
+					<font fontName="Arial" size="9" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Insured Name"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement uuid="737edb8b-924c-45bc-a1c9-f3686739217f" style="common" stretchType="RelativeToBandHeight" x="91" y="0" width="10" height="14"/>
+				<box leftPadding="2" rightPadding="2"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="Arial" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[":"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement uuid="5d3ecbc6-4ede-4b9b-b335-de49f3654521" style="common1" stretchType="RelativeToTallestObject" x="303" y="0" width="68" height="15"/>
+				<box leftPadding="2"/>
+				<textElement markup="none">
+					<font fontName="Arial" size="9" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["TAX Debit Note No."]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement uuid="2fb561b9-1ab3-4d37-9feb-5baf10b7c0e6" style="common" stretchType="RelativeToBandHeight" x="382" y="1" width="10" height="14"/>
+				<box leftPadding="2" rightPadding="2"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="Arial" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[":"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement uuid="10bc6e4d-49b0-45ee-b6cb-1d9a5e875a95" style="common" stretchType="RelativeToTallestObject" x="111" y="1" width="192" height="15" isPrintWhenDetailOverflows="true"/>
+				<box>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement/>
+				<textFieldExpression><![CDATA[($F{INSURED_NAME}==null?"":$F{INSURED_NAME}).trim()]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement uuid="4c54dc1a-7f9c-4459-b6d8-d886ff9910b8" style="common" stretchType="RelativeToTallestObject" x="396" y="1" width="125" height="15" isPrintWhenDetailOverflows="true"/>
+				<box>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement/>
+				<textFieldExpression><![CDATA[($F{DEBIT_NOTE_NO}==null?"":$F{DEBIT_NOTE_NO})]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="20">
+			<textField>
+				<reportElement uuid="9076b504-6694-4c77-8000-9d663cf81c90" style="common1" stretchType="RelativeToTallestObject" x="0" y="0" width="81" height="15"/>
+				<box leftPadding="5"/>
+				<textElement verticalAlignment="Top" markup="none">
+					<font fontName="Arial" size="9" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Address"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement uuid="593442ab-d81c-4aef-853b-bbbc722ae51f" style="common" stretchType="RelativeToBandHeight" x="91" y="0" width="10" height="14"/>
+				<box leftPadding="2" rightPadding="2"/>
+				<textElement textAlignment="Left" verticalAlignment="Top">
+					<font fontName="Arial" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[":"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="991daf25-90da-4786-b332-6083edc0d2e4" style="common1" stretchType="RelativeToTallestObject" x="303" y="1" width="68" height="15"/>
+				<box leftPadding="2"/>
+				<textElement markup="none">
+					<font fontName="Arial" size="9" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Binder No"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement uuid="e0344cee-29cf-4d75-b0af-4a734bf1f1f9" style="common" stretchType="RelativeToBandHeight" x="382" y="2" width="10" height="14"/>
+				<box leftPadding="2" rightPadding="2"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="Arial" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[":"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement uuid="549333cd-8877-48dd-ab6b-2d2faf7fdeca" style="common" stretchType="RelativeToTallestObject" x="111" y="1" width="192" height="15" isPrintWhenDetailOverflows="true"/>
+				<box>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement verticalAlignment="Top"/>
+				<textFieldExpression><![CDATA[($F{ADDRESS}==null?"":$F{ADDRESS})]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement uuid="f76451dc-2fc5-48cf-a1a0-6d65ddd37ff5" style="common" stretchType="RelativeToTallestObject" x="394" y="2" width="127" height="15" isPrintWhenDetailOverflows="true"/>
+				<box>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement/>
+				<textFieldExpression><![CDATA[($F{BINDER_NO}==null?"":$F{BINDER_NO})]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="18">
+			<textField>
+				<reportElement uuid="0eb6c2c7-1deb-42e5-a68e-99d6cbad4170" style="common1" stretchType="RelativeToTallestObject" x="0" y="0" width="81" height="14"/>
+				<box leftPadding="5"/>
+				<textElement markup="none">
+					<font fontName="Arial" size="9" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Policy No"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement uuid="2a6b81f0-0f1b-43bc-af3d-ec96253db8d4" style="common" stretchType="RelativeToBandHeight" x="91" y="0" width="10" height="14"/>
+				<box leftPadding="2" rightPadding="2"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="Arial" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[":"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="7b8dc24e-693a-4a11-9da2-8e4011e99e41" style="common1" stretchType="RelativeToTallestObject" x="303" y="1" width="68" height="15"/>
+				<box leftPadding="2"/>
+				<textElement markup="none">
+					<font fontName="Arial" size="9" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["TPIN"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement uuid="3deedf17-5e0d-4f5c-8067-d5023b0949ce" style="common" stretchType="RelativeToBandHeight" x="382" y="1" width="10" height="14"/>
+				<box leftPadding="2" rightPadding="2"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="Arial" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[":"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement uuid="6a9c66c1-c1ac-4cdc-b8b8-e179098b5ed8" style="common" stretchType="RelativeToTallestObject" x="111" y="1" width="192" height="15" isPrintWhenDetailOverflows="true"/>
+				<box>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement/>
+				<textFieldExpression><![CDATA[($F{POLICY_NO}==null?"":$F{POLICY_NO})]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement uuid="e23082f3-7f27-41dd-b3af-3c0f2d878831" style="common" stretchType="RelativeToTallestObject" x="394" y="0" width="127" height="15" isPrintWhenDetailOverflows="true"/>
+				<box>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement/>
+				<textFieldExpression><![CDATA[($F{TPIN}==null?"":$F{TPIN})]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="29">
+			<textField>
+				<reportElement uuid="c1fbfcf3-67b2-429b-b307-79f223235170" style="common1" stretchType="RelativeToTallestObject" x="0" y="0" width="91" height="14"/>
+				<box leftPadding="5"/>
+				<textElement markup="none">
+					<font fontName="Arial" size="9" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Policy Period"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement uuid="99e57767-a375-4911-8ce1-ff5b04f93666" style="common" stretchType="RelativeToBandHeight" x="91" y="0" width="10" height="14"/>
+				<box leftPadding="2" rightPadding="2"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="Arial" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[":"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement uuid="b3b58abf-3cc1-4fc9-9703-a2b1e7c9cce8" style="common" stretchType="RelativeToTallestObject" x="111" y="0" width="343" height="15" isPrintWhenDetailOverflows="true"/>
+				<box>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement/>
+				<textFieldExpression><![CDATA[($F{POLICY_PERIOD}==null?"":$F{POLICY_PERIOD})]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="20">
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement uuid="9db3ce65-4d40-4627-870f-e354f05f04f9" style="common1" stretchType="RelativeToTallestObject" x="0" y="0" width="380" height="20"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle" markup="none">
+					<font fontName="Arial" size="9" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Cover"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="1555ec7c-6165-43d3-9406-2846625d566a" style="common1" stretchType="RelativeToTallestObject" x="380" y="0" width="143" height="20"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle" markup="none">
+					<font fontName="Arial" size="9" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[($F{CURRENCY}==null?"":$F{CURRENCY})]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="15">
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement uuid="74a2d593-ef44-4e59-9a04-1e99cb49a0ed" style="common1" stretchType="RelativeToTallestObject" x="0" y="0" width="380" height="15"/>
+				<box leftPadding="5">
+					<topPen lineWidth="0.0"/>
+					<leftPen lineWidth="0.0"/>
+					<bottomPen lineWidth="0.0"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Middle" markup="none">
+					<font fontName="Arial" size="9" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Premium"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement uuid="eb835144-a568-4079-8545-98792392e824" style="common1" stretchType="RelativeToTallestObject" x="380" y="0" width="143" height="15"/>
+				<box leftPadding="5" rightPadding="5">
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.0"/>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle" markup="none">
+					<font fontName="Arial" size="9" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[($F{PREMIUM}==null?"":$F{PREMIUM})]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="77">
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement uuid="0fdad418-1159-49f2-88f1-7ba7f02d08d3" style="common1" stretchType="RelativeToTallestObject" x="0" y="0" width="380" height="20"/>
+				<box leftPadding="5">
+					<topPen lineWidth="0.0"/>
+					<leftPen lineWidth="0.0"/>
+					<bottomPen lineWidth="0.0"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Middle" markup="none">
+					<font fontName="Arial" size="9" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Premium Tax @"+($F{VAT}==null?"":$F{VAT})+"%"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement uuid="86b8ee29-3dc0-401e-b016-33ac78ce1e8d" style="common1" stretchType="RelativeToTallestObject" x="380" y="0" width="143" height="20"/>
+				<box leftPadding="2" rightPadding="5">
+					<topPen lineWidth="0.0"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.0"/>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle" markup="none">
+					<font fontName="Arial" size="9" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[($F{VAT_AMT}==null?"":$F{VAT_AMT})]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement uuid="9c4b735a-0e49-4e0e-8505-27802d6dbe2e" style="common1" stretchType="RelativeToTallestObject" x="0" y="20" width="380" height="57"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.0"/>
+					<leftPen lineWidth="0.0"/>
+					<bottomPen lineWidth="0.0"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Middle" markup="none">
+					<font fontName="Arial" size="9" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[""]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="20">
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement uuid="33c1fae8-9700-4fc9-99da-a45ef19c181a" style="common1" stretchType="RelativeToTallestObject" x="0" y="0" width="380" height="20"/>
+				<box leftPadding="2" rightPadding="5">
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle" markup="none">
+					<font fontName="Arial" size="9" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["TOTAL"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement uuid="371237e4-5e8a-489e-bd1f-36532c4811aa" style="common1" stretchType="RelativeToTallestObject" x="380" y="0" width="143" height="20"/>
+				<box leftPadding="2" rightPadding="5">
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle" markup="none">
+					<font fontName="Arial" size="9" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[($F{TOTAL}==null?"":$F{TOTAL})]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="50">
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement uuid="e88e9c8a-15f5-46cd-a776-d46637297464" style="common1" stretchType="RelativeToTallestObject" x="0" y="0" width="380" height="20"/>
+				<box leftPadding="2" rightPadding="5">
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Middle" markup="none">
+					<font fontName="Arial" size="9" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[($F{AMT_WORD}==null?"":$F{AMT_WORD})]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement uuid="bfd0fef6-cf61-4b01-8a87-8c0548e7e0bf" style="common1" stretchType="RelativeToTallestObject" x="380" y="0" width="143" height="20"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle" markup="none">
+					<font fontName="Arial" size="9" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[""]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="59">
+			<textField>
+				<reportElement uuid="4567d904-c29c-4b08-b717-3ff3f69edfb9" style="common1" stretchType="RelativeToTallestObject" x="0" y="36" width="81" height="14"/>
+				<box leftPadding="5"/>
+				<textElement markup="none">
+					<font fontName="Arial" size="9" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Prepared By"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement uuid="718ea403-9153-4374-a1b4-265ae7c3ec57" style="common" stretchType="RelativeToBandHeight" x="96" y="36" width="10" height="14"/>
+				<box leftPadding="2" rightPadding="2"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="Arial" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[":"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="15f001e9-403a-4558-8341-bb03483ac8ff" style="common1" stretchType="RelativeToTallestObject" x="313" y="36" width="81" height="14"/>
+				<box leftPadding="2"/>
+				<textElement markup="none">
+					<font fontName="Arial" size="9" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Approved By"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement uuid="ef259da8-e573-4f45-a6f5-e56bbaecd1a3" style="common" stretchType="RelativeToBandHeight" x="394" y="36" width="10" height="14"/>
+				<box leftPadding="2" rightPadding="2"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="Arial" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[":"]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement uuid="51979039-eb2e-47ad-a9ca-a62f10e75c9b" stretchType="RelativeToBandHeight" x="2" y="53" width="519" height="1"/>
+				<graphicElement>
+					<pen lineWidth="0.5"/>
+				</graphicElement>
+			</line>
+		</band>
+		<band height="22">
+			<textField>
+				<reportElement uuid="088ee038-709e-4bde-842a-988d1be38774" style="common1" stretchType="RelativeToTallestObject" x="0" y="8" width="96" height="14"/>
+				<box leftPadding="5"/>
+				<textElement markup="none">
+					<font fontName="Arial" size="9" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Place of Issue"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement uuid="68ba2b26-b468-4286-a71b-a23420b202d3" style="common" stretchType="RelativeToBandHeight" x="96" y="8" width="10" height="14"/>
+				<box leftPadding="2" rightPadding="2"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="Arial" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[":"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement uuid="1c779ed2-8268-4b88-b834-1849713b04b0" style="common" stretchType="RelativeToTallestObject" x="111" y="7" width="127" height="15" isPrintWhenDetailOverflows="true"/>
+				<box>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement/>
+				<textFieldExpression><![CDATA[($F{PLACE_OF_ISSUE}==null?"":$F{PLACE_OF_ISSUE})]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="15">
+			<textField>
+				<reportElement uuid="6c0bfd6e-8aba-42e9-b2eb-5acd9f2e4a86" style="common1" stretchType="RelativeToTallestObject" x="0" y="0" width="96" height="14"/>
+				<box leftPadding="5"/>
+				<textElement markup="none">
+					<font fontName="Arial" size="9" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Date of Issue"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement uuid="13d262ce-f585-4f6a-a4ea-c5d2d33f88c7" style="common" stretchType="RelativeToBandHeight" x="96" y="0" width="10" height="14"/>
+				<box leftPadding="2" rightPadding="2"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="Arial" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[":"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="84a981b0-592f-45ff-b5d7-b008137284d4" style="common1" stretchType="RelativeToTallestObject" x="303" y="0" width="123" height="14"/>
+				<box leftPadding="2"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" markup="none">
+					<font fontName="Arial" size="9" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Authorized Signature"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement uuid="27d38c41-255c-409a-a552-f8723b362148" style="common" stretchType="RelativeToTallestObject" x="111" y="0" width="127" height="15" isPrintWhenDetailOverflows="true"/>
+				<box>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement/>
+				<textFieldExpression><![CDATA[($F{DATE_OF_ISSUE}==null?"":$F{DATE_OF_ISSUE})]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="15">
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement uuid="3fde1bc6-50f4-450b-8995-202f7f57a0f8" style="common1" stretchType="RelativeToTallestObject" x="303" y="0" width="123" height="14"/>
+				<box leftPadding="2"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" markup="none">
+					<font fontName="Arial" size="9" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["MANAGER"]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="17">
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement uuid="5c00e05e-47b3-406b-ae33-7d619ef58405" style="common1" stretchType="RelativeToTallestObject" x="190" y="0" width="331" height="14"/>
+				<box leftPadding="2"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" markup="none">
+					<font fontName="Arial" size="9" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["FOR MADISON GENERAL INSURANCE COMPANY (Z) LIMITED"]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<columnFooter>
+		<band splitType="Stretch"/>
+	</columnFooter>
+	<pageFooter>
+		<band splitType="Stretch"/>
+	</pageFooter>
+	<summary>
+		<band splitType="Stretch"/>
+	</summary>
+</jasperReport>

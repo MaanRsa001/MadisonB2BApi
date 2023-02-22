@@ -1,6 +1,7 @@
 package com.maan.Madison.service;
 
 import com.maan.Madison.request.DeductibleReq;
+import com.maan.Madison.request.GetVehicleTypeReq;
 import com.maan.Madison.response.CommonResponse;
 
 public interface DropDownService {
@@ -42,5 +43,7 @@ public interface DropDownService {
 	CommonResponse getPaymentType();
 
 	CommonResponse getPaymentBank();
+
+	CommonResponse getVehicleTypes(GetVehicleTypeReq req);
 
 }
