@@ -318,6 +318,7 @@ public class ParallelThreadExecutionImpl {
 			
 			String overallPremium =hpm.getOverallPremium()==null?"":hpm.getOverallPremium().toString();
 			
+			
 			String PolicyFees =hpm.getPolicyFee()==null?"":hpm.getPolicyFee().toString();
 			
 			response.setBasePremium(basePremium.toString());
@@ -329,7 +330,7 @@ public class ParallelThreadExecutionImpl {
 			response.setPremiumBeforTax(before_tax_premium.toString());
 			response.setDeductibles(deductables.toString());
 			response.setMinimumPremiumAdjust(minimumPreAdjust.toString());
-			response.setOverAllPremium(overallPremium);
+			response.setOverAllPremium(overallPremium.toString());
 		}catch (Exception e) {
 			e.printStackTrace();
 			log.error(e);
@@ -337,4 +338,5 @@ public class ParallelThreadExecutionImpl {
 		return CompletableFuture.completedFuture(response);
 	}
 	
+
 }

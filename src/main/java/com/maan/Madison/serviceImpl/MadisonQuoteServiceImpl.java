@@ -222,7 +222,6 @@ public class MadisonQuoteServiceImpl implements MadisonQuoteService{
 			String policyType=StringUtils.isBlank(quoteReq.getPolicyInfo().getPolicyType())?"":quoteReq.getPolicyInfo().getPolicyType();
 			String policyStartDate =quoteReq.getPolicyInfo().getPolicyStartState();
 			String policyEndtDate =quoteReq.getPolicyInfo().getPolicyEndDate();
-			String brokerCode =quoteReq.getBrokerCode();
 			String loginId =quoteReq.getLoginId();
 			String productId =quoteReq.getProductId();
 			String type="";
@@ -234,7 +233,7 @@ public class MadisonQuoteServiceImpl implements MadisonQuoteService{
 			HomePositionMaster hpm =executionImpl.saveHpm(req);
 			
 			if("admin".equalsIgnoreCase(quoteReq.getUserType())) {
-				type="referal";
+				type="Referal";
 			}else if("broker".equalsIgnoreCase(quoteReq.getUserType())) {
 				type="Normal";
 			}
@@ -618,19 +617,7 @@ public class MadisonQuoteServiceImpl implements MadisonQuoteService{
 					res.setResponse("Quote referal successfully to "+hpm.getLoginId()+"");
 				}else {
 					if("Y".equalsIgnoreCase(req.getGeneratePolicyYn())) {
-						/*String url=hpmRepo.getPaymentUrl();
-						try {
-							String paymentType="madisonPay"; 
-							String type="";
-							String stat =hpmRepo.checkIsB2C(hpm.getLoginId());
-							if("Y".equalsIgnoreCase(stat))
-								type="b2c";
-							else
-								type="b2b";
-							String encrData=new BCryptPasswordEncoder().encode("quoteNo="+req.getQuoteNo()+"~~paymentType="+paymentType+"~~productId="+hpm.getProductId()+"~~brokertype="+type+"~~logintype=b2b~~branchCode="+req.getBranchCode());
-							encrPayUrl=url+encrData;
-							
-							log.info("Payment encode url :"+encrPayUrl);*/
+						
 						String firstName =StringUtils.isBlank(per.getFirstName())?"":per.getFirstName();
 						String lastName =StringUtils.isBlank(per.getLastName())?"":per.getLastName();
 						String email =StringUtils.isBlank(per.getEmail())?"":per.getEmail();
