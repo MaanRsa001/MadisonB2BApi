@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Date;
@@ -46,9 +47,11 @@ import com.lowagie.text.pdf.PdfWriter;
 import com.maan.Madison.controller.DocumentUploadController;
 import com.maan.Madison.entity.DocumentUploadDetails;
 import com.maan.Madison.entity.DocumentUploadDetailsId;
+import com.maan.Madison.entity.HomePositionMaster;
 import com.maan.Madison.entity.MailMaster;
 import com.maan.Madison.entity.MotorDataDetail;
 import com.maan.Madison.repository.DocumentUploadRepository;
+import com.maan.Madison.repository.HomePositionMasterRepository;
 import com.maan.Madison.repository.MailMasterRepository;
 import com.maan.Madison.repository.MotorDataDetailRepository;
 import com.maan.Madison.request.BuyPolicyRequest;
@@ -84,6 +87,8 @@ public class DocumentUploadServiceImpl implements DocumentUploadService{
 	private MailMasterRepository mailMasterRepo;
 	@Autowired
 	private MotorDataDetailRepository motorDataDetailRepository;
+	@Autowired
+	private HomePositionMasterRepository hpmRepo;
 	@Autowired
 	private CommonService cs;
 	@Override
@@ -311,6 +316,7 @@ public class DocumentUploadServiceImpl implements DocumentUploadService{
 	@Override
 	public CommonResponse getPolicyCertificate(String quoteNo, String vehicleId) {
 		CommonResponse res = new CommonResponse();
+		Connection conn =null;
 		try {
 			String classpath = this.getClass().getClassLoader().getResource("").getPath();
 			classpath = classpath.replaceAll("%20", " ");
@@ -318,11 +324,14 @@ public class DocumentUploadServiceImpl implements DocumentUploadService{
 
 			String imagepath = classpath + "images/";
 			
-			//String certificatePath = cs.getappconstantsProperty().getProperty("");
-			//String certificatePath = cs.getappconstantsProperty().getProperty("");
+			String certificatePath = cs.getappconstantsProperty().getProperty("madison.policy.certificate.file.path");
 
-			String jasperPath = imagepath + "/" + quoteNo + "PolicyCertificate.pdf";
+			String jasperPath = certificatePath + "/" +quoteNo+ ".pdf";
 
+			String qrcode_common_path =cs.getappconstantsProperty().getProperty("madison.policy.qrcode.file.path");
+			String qrcode_jasper_path =qrcode_common_path+quoteNo+".JPG";;
+			
+			
 			List<Map<String,Object>> qrData =motorDataDetailRepository.getCertificateDetails(quoteNo, vehicleId);
 			
 			String polNo=qrData.get(0).get("POLICY_NO")==null?"":qrData.get(0).get("POLICY_NO").toString();
@@ -333,24 +342,23 @@ public class DocumentUploadServiceImpl implements DocumentUploadService{
 			String tag="MGen ZM";
 			String msg=polNo+"\r\n"+vehRegNo+"\r\n"+issueDate+"\r\n"+expDate+"\r\n"+certNo+"\r\n"+tag;
 			String loginId=qrData.get(0).get("LOGIN_ID")==null?"":qrData.get(0).get("LOGIN_ID").toString();
+			String branchCode=qrData.get(0).get("BRANCH_CODE")==null?"":qrData.get(0).get("BRANCH_CODE").toString();
 
 			String userName =motorDataDetailRepository.getUserName(loginId);
 			
-			String qrCodePath ="C:\\Users\\MAANSAROVAR04\\Desktop\\DhofarWhatsappDetails\\"+quoteNo+".JPG";
-			String qrCodePath1 ="C:\\Users\\MAANSAROVAR04\\Desktop\\DhofarWhatsappDetails\\";
 			
-			generateQRCode(msg,200,200,qrCodePath);
+			generateQRCode(msg,200,200,qrcode_jasper_path);
 			
 			HashMap<String, Object> jasperParameter = new HashMap<String, Object>();
 			jasperParameter.put("Quoteno", quoteNo);
-			jasperParameter.put("Pvbranch", "01");
+			jasperParameter.put("Pvbranch", branchCode);
 			jasperParameter.put("Status", "");
 			jasperParameter.put("PvVechicle", vehicleId);
 			jasperParameter.put("imagePath", imagepath);
 			jasperParameter.put("Pvusername",userName==null?"":userName);
-			jasperParameter.put("QRPath", qrCodePath1);
+			jasperParameter.put("QRPath", qrcode_common_path);
 
-			Connection conn = getConnection();
+			conn = getConnection();
 
 			InputStream is = this.getClass().getResourceAsStream("/jasper/PolicyCertificateNew.jrxml");
 
@@ -367,10 +375,22 @@ public class DocumentUploadServiceImpl implements DocumentUploadService{
 
 			String encodeToString = Base64.getEncoder().encodeToString(bytes);
 			
+			res.setMessage("SUCCESS");
 			res.setResponse(encodeToString);
 		}catch (Exception e) {
 			e.printStackTrace();
 			log.error(e);
+			res.setMessage("FAILED");
+			res.setResponse(null);
+		}finally {
+			
+			if(conn!=null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
 		}
 		return res;
 	}
@@ -394,24 +414,6 @@ public class DocumentUploadServiceImpl implements DocumentUploadService{
 		return connection;
 	}
 	
-	private void doMerge(InputStream list, OutputStream outputStream) throws DocumentException, IOException {
-		Document document = new Document();
-		PdfWriter writer = PdfWriter.getInstance(document, outputStream);
-		document.open();
-		PdfContentByte cb = writer.getDirectContent();
-		
-			PdfReader reader = new PdfReader(list);
-			for (int i = 1; i <= reader.getNumberOfPages(); i++) {
-				document.newPage();
-				PdfImportedPage page = writer.getImportedPage(reader, i);
-				cb.addTemplate(page, 0, 0);
-			}
-
-		outputStream.flush();
-		document.close();
-		outputStream.close();
-	}
-	
 	
 	@SuppressWarnings("deprecation")
 	public void generateQRCode(String text, int width, int height, String filePath) {
@@ -424,5 +426,180 @@ public class DocumentUploadServiceImpl implements DocumentUploadService{
 			e.printStackTrace();
 		}
 	}
-	
+
+	@Override
+	public CommonResponse getPolicySchedule(String quoteNo) {
+		CommonResponse res = new CommonResponse();
+		Connection conn =null;
+		try {
+			HomePositionMaster hpm =hpmRepo.findByQuoteNo(Long.valueOf(quoteNo));
+			
+			String classpath = this.getClass().getClassLoader().getResource("").getPath();
+			classpath = classpath.replaceAll("%20", " ");
+			classpath = classpath.substring(1, classpath.length());
+			String imagepath = classpath + "images/";
+			
+			String policySchedulePath =cs.getappconstantsProperty().getProperty("madison.policy.schedule.file.path");
+			
+			String jasper_path=policySchedulePath +quoteNo+ ".pdf";
+			
+			HashMap<String, Object> jasperParameter = new HashMap<String, Object>();
+			jasperParameter.put("Quoteno", quoteNo);
+			jasperParameter.put("Pvbranch", hpm.getBranchCode());
+			jasperParameter.put("imagePath", imagepath);
+			jasperParameter.put("Status", "");
+			
+			 conn = getConnection();
+
+			InputStream is = this.getClass().getResourceAsStream("/jasper/Schedule.jrxml");
+
+			JasperReport jr = JasperCompileManager.compileReport(is);
+
+			JasperPrint jp = JasperFillManager.fillReport(jr, jasperParameter, conn);
+
+			JasperExportManager.exportReportToPdfFile(jp, jasper_path);
+			
+			File file = new File(jasper_path);
+			
+			
+			byte[] bytes = FileUtils.readFileToByteArray(file);
+
+			String encodeToString = Base64.getEncoder().encodeToString(bytes);
+			
+			res.setMessage("SUCCESS");
+			res.setResponse(encodeToString);
+		}catch (Exception e) {
+			e.printStackTrace();
+			log.error(e);
+			res.setMessage("FAILED");
+			res.setResponse(null);
+		}finally {
+			
+			if(conn!=null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		return res;
+	}
+
+	@Override
+	public CommonResponse getPolicyReceipt(String quoteNo) {
+		CommonResponse res = new CommonResponse();
+		Connection conn =null;
+		try {
+			HomePositionMaster hpm =hpmRepo.findByQuoteNo(Long.valueOf(quoteNo));
+			
+			String classpath = this.getClass().getClassLoader().getResource("").getPath();
+			classpath = classpath.replaceAll("%20", " ");
+			classpath = classpath.substring(1, classpath.length());
+			String imagepath = classpath + "images/";
+			
+			String receiptPath =cs.getappconstantsProperty().getProperty("madison.policy.receipt.file.path");
+
+			String jasper_path=receiptPath +quoteNo+ ".pdf";
+
+			HashMap<String, Object> jasperParameter = new HashMap<String, Object>();
+			jasperParameter.put("Quoteno", quoteNo);
+			jasperParameter.put("Pvproduct", hpm.getProductId()==null?"65":hpm.getProductId());
+			jasperParameter.put("Pvbranch", StringUtils.isBlank(hpm.getBranchCode())?"01":hpm.getBranchCode());
+			jasperParameter.put("imagePath", imagepath);
+						
+			conn = getConnection();
+
+			InputStream is = this.getClass().getResourceAsStream("/jasper/Receipt.jrxml");
+
+			JasperReport jr = JasperCompileManager.compileReport(is);
+
+			JasperPrint jp = JasperFillManager.fillReport(jr, jasperParameter, conn);
+
+			JasperExportManager.exportReportToPdfFile(jp, jasper_path);
+				
+			File file = new File(jasper_path);
+				
+				
+			byte[] bytes = FileUtils.readFileToByteArray(file);
+
+			String encodeToString = Base64.getEncoder().encodeToString(bytes);
+				
+			res.setMessage("SUCCESS");
+			res.setResponse(encodeToString);
+		}catch (Exception e) {
+			e.printStackTrace();
+			log.error(e);
+			res.setMessage("FAILED");
+			res.setResponse(null);
+		}finally {
+			if(conn!=null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		return res;
+	}
+
+	@Override
+	public CommonResponse getPolicyDebit(String quoteNo) {
+		CommonResponse res = new CommonResponse();
+		Connection conn =null;
+		try {
+			HomePositionMaster hpm =hpmRepo.findByQuoteNo(Long.valueOf(quoteNo));
+			
+			String classpath = this.getClass().getClassLoader().getResource("").getPath();
+			classpath = classpath.replaceAll("%20", " ");
+			classpath = classpath.substring(1, classpath.length());
+			String imagepath = classpath + "images/";
+			
+			String debitPath =cs.getappconstantsProperty().getProperty("madison.policy.debit.file.path");
+
+			String jasper_path=debitPath +quoteNo+ ".pdf";
+
+			
+			HashMap<String, Object> jasperParameter = new HashMap<String, Object>();
+			jasperParameter.put("Quoteno", quoteNo);
+			jasperParameter.put("Pvproduct", hpm.getProductId()==null?"65":hpm.getProductId());
+			jasperParameter.put("Pvbranch", StringUtils.isBlank(hpm.getBranchCode())?"01":hpm.getBranchCode());
+			jasperParameter.put("Status", "");
+			jasperParameter.put("imagePath", imagepath);
+						
+			conn = getConnection();
+
+			InputStream is = this.getClass().getResourceAsStream("/jasper/Receipt.jrxml");
+
+			JasperReport jr = JasperCompileManager.compileReport(is);
+
+			JasperPrint jp = JasperFillManager.fillReport(jr, jasperParameter, conn);
+
+			JasperExportManager.exportReportToPdfFile(jp, jasper_path);
+				
+			File file = new File(jasper_path);
+				
+			byte[] bytes = FileUtils.readFileToByteArray(file);
+
+			String encodeToString = Base64.getEncoder().encodeToString(bytes);
+				
+			res.setMessage("SUCCESS");
+			res.setResponse(encodeToString);
+		}catch (Exception e) {
+			e.printStackTrace();
+			log.error(e);
+			res.setMessage("FAILED");
+			res.setResponse(null);
+		}finally {
+			if(conn!=null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		return res;
+	}
 }

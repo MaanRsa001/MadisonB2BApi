@@ -20,4 +20,10 @@ public interface DocumentUploadService {
 
 	CommonResponse getPolicyCertificate(String quoteNo, String vehicleId);
 
+	CommonResponse getPolicySchedule(String quoteNo);
+
+	CommonResponse getPolicyReceipt(String quoteNo);
+
+	CommonResponse getPolicyDebit(String quoteNo);
+
 }

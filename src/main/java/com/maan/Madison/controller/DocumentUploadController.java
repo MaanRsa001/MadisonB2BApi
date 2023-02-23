@@ -87,4 +87,21 @@ public class DocumentUploadController {
 	public CommonResponse getPolicyCertificate(@RequestParam ("quoteNo") String quoteNo,@RequestParam("vehicleId") String vehicleId) {
 		return service.getPolicyCertificate(quoteNo,vehicleId);
 	}
+	
+	@GetMapping("/get/policy/schedule")
+	public CommonResponse getPolicySchedule(@RequestParam("quoteNo") String quoteNo) {
+		return service.getPolicySchedule(quoteNo);
+	}
+	
+	@GetMapping("/get/policy/receipt")
+	public CommonResponse getPolicyReceipt(@RequestParam("quoteNo") String quoteNo) {
+		return service.getPolicyReceipt(quoteNo);
+	}
+	
+	@GetMapping("/get/policy/debit")
+	public CommonResponse getPolicyDebit(@RequestParam("quoteNo") String quoteNo) {
+		return service.getPolicyDebit(quoteNo);
+	}
+	
+	
 }
