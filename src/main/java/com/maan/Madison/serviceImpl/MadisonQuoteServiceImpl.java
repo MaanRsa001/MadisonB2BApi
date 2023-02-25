@@ -2,6 +2,8 @@ package com.maan.Madison.serviceImpl;
 
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -13,6 +15,12 @@ import javax.persistence.EntityManager;
 import javax.persistence.ParameterMode;
 import javax.persistence.PersistenceContext;
 import javax.persistence.StoredProcedureQuery;
+import javax.persistence.Tuple;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Expression;
+import javax.persistence.criteria.Root;
+import javax.persistence.criteria.Subquery;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -50,6 +58,7 @@ import com.maan.Madison.response.DriverEditRes;
 import com.maan.Madison.response.GetVehicleReq;
 import com.maan.Madison.response.PremiumInfoRes;
 import com.maan.Madison.response.QuoteInfoRes;
+import com.maan.Madison.response.RejectListRes;
 import com.maan.Madison.response.SaveVehicleRes;
 import com.maan.Madison.response.VehicleEditRes;
 import com.maan.Madison.response.VehicleInfoRes;
@@ -714,6 +723,97 @@ public class MadisonQuoteServiceImpl implements MadisonQuoteService{
 		return res;
 	}
 
+	@Override
+	public CommonResponse getRejectList(String loginId, String productId, String branchCode) {
+		CommonResponse res = new CommonResponse();
+		List<Object> resList = new ArrayList<Object>();
+		List<Tuple> list;
+			
+			try {
+				CriteriaBuilder cb = em.getCriteriaBuilder();
+				CriteriaQuery<Tuple> cq = cb.createQuery(Tuple.class);
+				Root<HomePositionMaster> aRoot = cq.from(HomePositionMaster.class);
+				Root<PersonalInfo> bRoot = cq.from(PersonalInfo.class);
+				
+				Expression<String> custName = cb.concat(cb.concat(bRoot.get("firstName"), " "), bRoot.get("lastName"));
+				
+				
+				Subquery<Integer> Subamend = cq.subquery(Integer.class);
+				Root<PersonalInfo> Bamend = Subamend.from(PersonalInfo.class);
+				
+				Subamend.select(cb.max(Bamend.get("amendId")))
+				.where(cb.equal(Bamend.get("customerId"), bRoot.get("customerId")));
+				
+				
+				cq.multiselect(aRoot.get("quoteNo").alias("QUOTE_NO"),
+						aRoot.get("lapsedRemarks").alias("LAPSED_REMARKS"),
+						aRoot.get("lapsedDate").alias("LAPSED_DATE"),
+						aRoot.get("applicationNo").alias("APPLICATION_NO"),
+						aRoot.get("customerId").alias("CUSTOMER_ID"),
+						aRoot.get("effectiveDate").alias("QUOTATION_DATE"),
+						custName.alias("CUSTOMER_NAME"),
+						aRoot.get("loginId").alias("LOGIN_ID"),
+						aRoot.get("status").alias("STATUS"),
+						bRoot.get("companyName").alias("COMPANY_NAME"),
+						cb.literal("Rejected").alias("REJECT_DESC"));
+				
+				cq.where(cb.equal(cb.in(aRoot.get("loginId")), loginId),
+						cb.equal(cb.in(aRoot.get("status")), "D"),
+						cb.equal(bRoot.get("customerId"), aRoot.get("customerId")),
+						cb.equal(aRoot.get("productId"), productId),
+						cb.equal(aRoot.get("branchCode"), branchCode),
+						cb.equal(cb.in(aRoot.get("applicationId")), "1"),
+						cb.equal(bRoot.get("amendId"), Subamend),
+						cb.equal(bRoot.get("status"), "Y"));
+				
+				list = em.createQuery(cq).getResultList();
+			
+			if(list!=null) {
+			for (int i = 0; i < list.size(); i++) {
+				Tuple tempMap = list.get(i);
+				RejectListRes tempBean = new RejectListRes();
+				tempBean.setQuoteNo(tempMap.get("QUOTE_NO")==null?"":tempMap.get("QUOTE_NO").toString());
+				tempBean.setLapsedRemarks(tempMap.get("LAPSED_REMARKS")==null?"":tempMap.get("LAPSED_REMARKS").toString());
+				tempBean.setLapsedDate(tempMap.get("LAPSED_DATE")==null?"":tempMap.get("LAPSED_DATE").toString());
+				tempBean.setApplicationNo(tempMap.get("APPLICATION_NO")==null?"":tempMap.get("APPLICATION_NO").toString());
+				tempBean.setCustomerId(tempMap.get("CUSTOMER_ID")==null?"":tempMap.get("CUSTOMER_ID").toString());
+				tempBean.setQuotationdate(tempMap.get("QUOTATION_DATE")==null?"":DateLess(tempMap.get("QUOTATION_DATE").toString()));
+				tempBean.setEffectiveDate(tempMap.get("QUOTATION_DATE")==null?"":DateFormat(tempMap.get("QUOTATION_DATE").toString()));
+				tempBean.setCustName(tempMap.get("CUSTOMER_NAME")==null?"":tempMap.get("CUSTOMER_NAME").toString());
+				tempBean.setLoginId(tempMap.get("LOGIN_ID")==null?"":tempMap.get("LOGIN_ID").toString());
+				tempBean.setStatus(tempMap.get("STATUS")==null?"":tempMap.get("STATUS").toString());
+				tempBean.setCompanyName(tempMap.get("COMPANY_NAME")==null?"":tempMap.get("COMPANY_NAME").toString());
+				tempBean.setRejected(tempMap.get("REJECT_DESC")==null?"":tempMap.get("REJECT_DESC").toString());
+				resList.add(tempBean);
+				}
+			}
+			res.setMessage("SUCCESS");
+			res.setResponse(resList);
+		}	catch (Exception e) {
+			log.error(e);
+			e.printStackTrace();
+			res.setMessage("FAILED");
+			res.setResponse(null);
+		}
+		return res;
+	}
 	
+	
+	public String DateLess(Object input) {
+		Object obj = null;
+		try {
+			if(input!=null) {
+			LocalDate date = LocalDate.parse(input.toString(), DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+			obj = date.minusDays(30);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return obj.toString();
+	}
+
+	public String DateFormat(Object input) {
+		return new SimpleDateFormat(input.toString().concat("dd/MM/yyyy")).toString();
+	}
 	
 }

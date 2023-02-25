@@ -32,4 +32,6 @@ public interface MadisonQuoteService {
 
 	CommonResponse editDriver(String applicationNo, String vehicleId);
 
+	CommonResponse getRejectList(String loginId, String productId, String branchCode);
+
 }

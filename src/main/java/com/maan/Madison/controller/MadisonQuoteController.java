@@ -105,5 +105,10 @@ public class MadisonQuoteController {
 		res.setErrors(list);
 		return res;
 	}
+
+	@GetMapping("/get/RejectList")
+	public CommonResponse getRejectList(@RequestParam ("loginId") String loginId,@RequestParam ("productId") String productId,@RequestParam ("branchCode") String branchCode) {
+		return service.getRejectList(loginId,productId,branchCode);
+	}
 	
 }
